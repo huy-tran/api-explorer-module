@@ -121,11 +121,19 @@
             <div id="tab-body" role="tabpanel" x-show="activeTab === 'body'" class="p-6 space-y-4">
                 <template x-for="field in active && active.fields ? active.fields : []" :key="field.name">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            <span x-text="field.name"></span>
-                            <span x-show="field.required" class="text-red-600">*</span>
-                            <span x-show="!field.required" class="text-gray-500 font-normal">(optional)</span>
-                        </label>
+                        <div class="flex items-center gap-2 mb-2">
+                            <input
+                                x-model="enabledFields[field.name]"
+                                @change="persistEndpointState()"
+                                type="checkbox"
+                                class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-neutral-900 focus:ring-neutral-900"
+                            />
+                            <label class="block text-sm font-medium text-gray-700">
+                                <span x-text="field.name"></span>
+                                <span x-show="field.required" class="text-red-600">*</span>
+                                <span x-show="!field.required" class="text-gray-500 font-normal">(optional)</span>
+                            </label>
+                        </div>
                         <template x-if="field.inputType === 'text'">
                             <div class="flex gap-2 items-center">
                                 <input

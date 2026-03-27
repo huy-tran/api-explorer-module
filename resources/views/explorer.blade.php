@@ -272,6 +272,7 @@
                 headers: [],
                 queryParams: [],
                 body: {},
+                enabledFields: {},
                 pathParams: {},
                 endpointState: {},
                 activeTab: 'body',
@@ -613,10 +614,22 @@
 
                         // Restore queryParams exactly
                         this.queryParams = Array.isArray(saved.queryParams) ? saved.queryParams : [];
+
+                        // Restore enabledFields (default to true if not saved)
+                        this.enabledFields = {};
+                        endpoint.fields.forEach(field => {
+                            this.enabledFields[field.name] = saved.enabledFields?.[field.name] !== false;
+                        });
                     } else {
                         this.body = defaultBody;
                         this.pathParams = defaultPathParams;
                         this.queryParams = [];
+
+                        // Initialize enabledFields to true for all fields
+                        this.enabledFields = {};
+                        endpoint.fields.forEach(field => {
+                            this.enabledFields[field.name] = true;
+                        });
                     }
 
                     this.active = endpoint;
@@ -748,6 +761,16 @@
                     }
                 },
 
+                getFilteredBody() {
+                    const filtered = {};
+                    for (const [key, value] of Object.entries(this.body)) {
+                        if (this.enabledFields[key] !== false) {
+                            filtered[key] = value;
+                        }
+                    }
+                    return filtered;
+                },
+
                 buildRequestOptions() {
                     const method = this.active.method.split('|')[0];
                     const options = {
@@ -767,21 +790,22 @@
                     });
 
                     // Handle body for POST/PUT/PATCH
+                    const filteredBody = this.getFilteredBody();
                     if (['POST', 'PUT', 'PATCH'].includes(method)) {
                         const hasFile = this.hasFileField(this.active.fields);
                         if (hasFile) {
                             const formData = new FormData();
-                            this.flattenObject(this.body, formData);
+                            this.flattenObject(filteredBody, formData);
                             options.body = formData;
                             delete options.headers['Content-Type'];
                         } else {
                             options.headers['Content-Type'] = 'application/json';
-                            options.body = JSON.stringify(this.applyVarsToObject(this.body));
+                            options.body = JSON.stringify(this.applyVarsToObject(filteredBody));
                         }
                     } else if (method === 'GET') {
                         // Serialize body and query params
                         const params = new URLSearchParams();
-                        this.flattenForQuery(this.body, params);
+                        this.flattenForQuery(filteredBody, params);
                         // Add explicit query params with variable substitution
                         this.queryParams.forEach(qp => {
                             if (qp.enabled !== false && qp.key && qp.value) {
@@ -879,6 +903,7 @@
                         body: this.body,
                         pathParams: this.pathParams,
                         queryParams: this.queryParams,
+                        enabledFields: this.enabledFields,
                     };
                     localStorage.setItem('apiExplorer.endpointState', JSON.stringify(this.endpointState));
                 },
