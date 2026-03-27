@@ -1,0 +1,9 @@
+{
+    "name": "ApiExplorer",
+    "alias": "api-explorer",
+    "description": "Self-hosted API explorer for local development",
+    "keywords": [],
+    "priority": 0,
+    "providers": ["Modules\\ApiExplorer\\Providers\\ApiExplorerServiceProvider"],
+    "files": []
+}
