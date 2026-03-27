@@ -15,6 +15,9 @@
 
     <!-- Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <!-- Fuse.js for fuzzy search -->
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
 </head>
 <body class="bg-gray-50" x-data="apiExplorer()" x-init="init()" @keydown.enter.ctrl="sendRequest()">
     <!-- Top Bar -->
@@ -246,6 +249,12 @@
                 envSelDropdownPosition: 'bottom',
                 envSelId: Math.random().toString(36).substr(2, 9),
 
+                // Search functionality
+                searchQuery: '',
+                filteredEndpoints: [],
+                filteredGrouped: {},
+                fuse: null,
+
                 init() {
                     this.baseUrl = window.__apiExplorerAppUrl;
                     try {
@@ -270,6 +279,13 @@
                     this.grouped = this.sortGroupedData(this.grouped);
                     // Flatten nested structure for lookup
                     this.allEndpoints = this.flattenEndpoints(this.grouped);
+
+                    // Initialize Fuse.js for fuzzy search
+                    this.fuse = new Fuse(this.allEndpoints, {
+                        keys: ['name', 'method', 'path'],
+                        threshold: 0.3,
+                        includeScore: true,
+                    });
 
                     // Load environments
                     this.loadEnvironments();
@@ -376,6 +392,88 @@
 
                 setActiveAccordion(id) {
                     this.activeAccordion = (this.activeAccordion == id) ? '' : id;
+                },
+
+                performSearch() {
+                    if (!this.searchQuery) {
+                        this.filteredGrouped = {};
+                        this.filteredEndpoints = [];
+                        return;
+                    }
+
+                    const results = this.fuse.search(this.searchQuery);
+                    this.filteredEndpoints = results.map(result => result.item);
+
+                    // Build filtered tree structure maintaining hierarchy
+                    this.filteredGrouped = this.buildFilteredTree(this.grouped, this.filteredEndpoints);
+                },
+
+                buildFilteredTree(grouped, matchingEndpoints) {
+                    const matchingEndpointsSet = new Set(matchingEndpoints.map(ep => ep.name));
+                    const filtered = {};
+
+                    for (const [groupName, groupData] of Object.entries(grouped)) {
+                        const filteredGroup = {};
+                        let hasMatchingEndpoints = false;
+
+                        // Filter endpoints at this level
+                        if (groupData.__endpoints && Array.isArray(groupData.__endpoints)) {
+                            const filtered__endpoints = groupData.__endpoints.filter(ep =>
+                                matchingEndpointsSet.has(ep.name)
+                            );
+                            if (filtered__endpoints.length > 0) {
+                                filteredGroup.__endpoints = filtered__endpoints;
+                                hasMatchingEndpoints = true;
+                            }
+                        }
+
+                        // Recursively filter nested groups
+                        for (const [nestedKey, nestedData] of Object.entries(groupData)) {
+                            if (nestedKey === '__endpoints') continue;
+
+                            if (typeof nestedData === 'object' && nestedData !== null) {
+                                const filteredNested = this.filterNestedGroup(nestedData, matchingEndpointsSet);
+                                if (Object.keys(filteredNested).length > 0) {
+                                    filteredGroup[nestedKey] = filteredNested;
+                                    hasMatchingEndpoints = true;
+                                }
+                            }
+                        }
+
+                        // Only include group if it has matching endpoints
+                        if (hasMatchingEndpoints) {
+                            filtered[groupName] = filteredGroup;
+                        }
+                    }
+
+                    return filtered;
+                },
+
+                filterNestedGroup(nestedData, matchingEndpointsSet) {
+                    const filtered = {};
+
+                    if (nestedData.__endpoints && Array.isArray(nestedData.__endpoints)) {
+                        const filtered__endpoints = nestedData.__endpoints.filter(ep =>
+                            matchingEndpointsSet.has(ep.name)
+                        );
+                        if (filtered__endpoints.length > 0) {
+                            filtered.__endpoints = filtered__endpoints;
+                        }
+                    }
+
+                    // Recursively process deeper nested groups
+                    for (const [key, value] of Object.entries(nestedData)) {
+                        if (key === '__endpoints') continue;
+
+                        if (typeof value === 'object' && value !== null) {
+                            const filteredNested = this.filterNestedGroup(value, matchingEndpointsSet);
+                            if (Object.keys(filteredNested).length > 0) {
+                                filtered[key] = filteredNested;
+                            }
+                        }
+                    }
+
+                    return filtered;
                 },
 
                 startResize(e) {
