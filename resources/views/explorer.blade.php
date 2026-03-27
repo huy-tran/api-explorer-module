@@ -299,6 +299,33 @@
                 fakerSearch: '',
                 fakerActiveCategory: 'all',
 
+                // Accept header select
+                acceptHeaderOptions: [
+                    { title: 'application/json', value: 'application/json' },
+                    { title: 'application/xml', value: 'application/xml' },
+                    { title: 'text/plain', value: 'text/plain' },
+                    { title: 'text/html', value: 'text/html' },
+                    { title: 'text/csv', value: 'text/csv' },
+                    { title: 'application/pdf', value: 'application/pdf' },
+                    { title: 'image/png', value: 'image/png' },
+                    { title: 'image/jpeg', value: 'image/jpeg' },
+                    { title: 'application/octet-stream', value: 'application/octet-stream' },
+                    { title: '*/* (any type)', value: '*/*' },
+                ],
+
+                // Content-Type header select
+                contentTypeOptions: [
+                    { title: 'application/json', value: 'application/json' },
+                    { title: 'application/xml', value: 'application/xml' },
+                    { title: 'text/plain', value: 'text/plain' },
+                    { title: 'text/html', value: 'text/html' },
+                    { title: 'application/x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
+                    { title: 'multipart/form-data', value: 'multipart/form-data' },
+                    { title: 'text/csv', value: 'text/csv' },
+                    { title: 'application/pdf', value: 'application/pdf' },
+                    { title: 'application/octet-stream', value: 'application/octet-stream' },
+                ],
+
                 // Environment selector (Pines)
                 envSelOpen: false,
                 envSelActiveItem: null,
@@ -324,6 +351,16 @@
                     } catch {
                         this.headers = [];
                     }
+
+                    // Ensure Content-Type and Accept headers exist with application/json default
+                    const ensureHeader = (key, defaultValue = 'application/json') => {
+                        const exists = this.headers.some(h => h.key === key);
+                        if (!exists) {
+                            this.headers.unshift({ key, value: defaultValue, enabled: true });
+                        }
+                    };
+                    ensureHeader('Content-Type');
+                    ensureHeader('Accept');
                     try {
                         this.endpointState = JSON.parse(localStorage.getItem('apiExplorer.endpointState') || '{}');
                     } catch {
@@ -868,8 +905,16 @@
                 },
 
                 removeHeader(index) {
+                    const header = this.headers[index];
+                    if (header && ['Content-Type', 'Accept'].includes(header.key)) {
+                        return; // Prevent deletion of required headers
+                    }
                     this.headers.splice(index, 1);
                     this.persistHeaders();
+                },
+
+                canDeleteHeader(header) {
+                    return !['Content-Type', 'Accept'].includes(header.key);
                 },
 
                 useAsToken(token) {

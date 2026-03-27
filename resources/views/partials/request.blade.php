@@ -70,22 +70,70 @@
                             />
                             <input
                                 x-model="header.key"
-                                @change="persistHeaders()"
+                                :readonly="['Content-Type', 'Accept'].includes(header.key)"
+                                @change="
+                                    if (header.key === 'Content-Type' && !header.value) {
+                                        header.value = 'application/json';
+                                    }
+                                    persistHeaders();
+                                "
                                 type="text"
                                 placeholder="Key"
+                                :class="['Content-Type', 'Accept'].includes(header.key) ? 'bg-gray-50 cursor-not-allowed' : ''"
                                 class="flex-1 h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
                             />
-                            <input
-                                x-model="header.value"
-                                @change="persistHeaders()"
-                                type="text"
-                                placeholder="Value"
-                                class="flex-1 h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
-                            />
+                            <template x-if="header.key === 'Accept' || header.key === 'Content-Type'">
+                                <div
+                                    x-data="{
+                                        selectOpen: false,
+                                        optionsList: header.key === 'Accept' ? acceptHeaderOptions : contentTypeOptions,
+                                        selectedItem: (header.key === 'Accept' ? acceptHeaderOptions : contentTypeOptions).find(o => o.value === header.value) || null
+                                    }"
+                                    @click.away="selectOpen = false"
+                                    class="relative flex-1"
+                                >
+                                    <button @click="selectOpen = !selectOpen"
+                                        :class="{ 'ring-2 ring-offset-2 ring-neutral-400': selectOpen }"
+                                        type="button"
+                                        class="relative w-full h-10 flex items-center justify-between px-3 py-2 text-left bg-white border rounded-md cursor-default border-neutral-300 focus:outline-none text-sm">
+                                        <span x-text="selectedItem ? selectedItem.title : '-- Select --'" class="truncate text-gray-700"></span>
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-400"><path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clip-rule="evenodd"/></svg>
+                                        </span>
+                                    </button>
+                                    <ul x-show="selectOpen"
+                                        x-transition:enter="transition ease-out duration-50"
+                                        x-transition:enter-start="opacity-0 -translate-y-1"
+                                        x-transition:enter-end="opacity-100"
+                                        class="absolute z-10 w-full py-1 overflow-auto text-sm bg-white rounded-md shadow-md max-h-56 ring-1 ring-black ring-opacity-5 focus:outline-none top-full mt-1"
+                                        x-cloak>
+                                        <template x-for="option in optionsList" :key="option.value">
+                                            <li @click="header.value = option.value; selectedItem = option; selectOpen = false; persistHeaders()"
+                                                :class="{ 'bg-neutral-100 text-gray-900': selectedItem && selectedItem.value === option.value }"
+                                                class="relative flex items-center h-full py-2 pl-8 pr-4 text-gray-700 cursor-default select-none hover:bg-gray-100">
+                                                <svg x-show="selectedItem && selectedItem.value === option.value" class="absolute left-0 w-4 h-4 ml-2 stroke-current text-neutral-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                <span class="block font-medium truncate" x-text="option.title"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                            </template>
+                            <template x-if="header.key !== 'Accept' && header.key !== 'Content-Type'">
+                                <input
+                                    x-model="header.value"
+                                    @change="persistHeaders()"
+                                    type="text"
+                                    placeholder="Value"
+                                    class="flex-1 h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                />
+                            </template>
                             <button
                                 @click="removeHeader(index)"
+                                :disabled="!canDeleteHeader(header)"
                                 type="button"
-                                class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-red-500 transition-colors duration-100 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-red-100 bg-red-50 hover:text-red-600 hover:bg-red-100"
+                                :class="!canDeleteHeader(header) ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-600 hover:bg-red-100'"
+                                class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-red-500 transition-colors duration-100 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-red-100 bg-red-50"
+                                :title="!canDeleteHeader(header) ? 'This header cannot be deleted' : 'Delete header'"
                             >
                                 ✕
                             </button>
