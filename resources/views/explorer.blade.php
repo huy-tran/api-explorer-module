@@ -18,8 +18,16 @@
 
     <!-- Fuse.js for fuzzy search -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+
+    <!-- Faker.js for generating fake data -->
+    <script type="module">
+        import { faker } from 'https://esm.sh/@faker-js/faker@8.3.1';
+        window.faker = faker;
+        window.fakerLoaded = true;
+        document.dispatchEvent(new Event('fakerReady'));
+    </script>
 </head>
-<body class="bg-gray-50" x-data="apiExplorer()" x-init="init()" @keydown.enter.ctrl="sendRequest()">
+<body class="bg-gray-50" x-data="apiExplorer()" x-init="waitForFaker().then(() => init())" @keydown.enter.ctrl="sendRequest()">
     <!-- Top Bar -->
     <header class="border-b border-gray-200 bg-white">
         <div class="mx-auto flex h-16 items-center justify-between px-6">
@@ -209,6 +217,52 @@
             };
         }
 
+        function waitForFaker() {
+            return new Promise(resolve => {
+                if (window.faker) {
+                    resolve();
+                } else {
+                    document.addEventListener('fakerReady', resolve, { once: true });
+                    setTimeout(() => {
+                        // Timeout - faker didn't load, but continue anyway
+                        resolve();
+                    }, 5000);
+                }
+            });
+        }
+
+        const fakerMethods = [
+            { category: 'person',   label: 'First Name',    expr: "faker.person.firstName()",           desc: 'e.g. John' },
+            { category: 'person',   label: 'First Name ♀',  expr: "faker.person.firstName('female')",   desc: 'e.g. Maria' },
+            { category: 'person',   label: 'First Name ♂',  expr: "faker.person.firstName('male')",     desc: 'e.g. James' },
+            { category: 'person',   label: 'Last Name',     expr: "faker.person.lastName()",            desc: 'e.g. Smith' },
+            { category: 'person',   label: 'Full Name',     expr: "faker.person.fullName()",            desc: 'e.g. John Smith' },
+            { category: 'person',   label: 'Job Title',     expr: "faker.person.jobTitle()",            desc: 'e.g. Senior Developer' },
+            { category: 'internet', label: 'Email',         expr: "faker.internet.email()",             desc: 'e.g. john@example.com' },
+            { category: 'internet', label: 'Username',      expr: "faker.internet.username()",          desc: 'e.g. john_42' },
+            { category: 'internet', label: 'URL',           expr: "faker.internet.url()",               desc: 'e.g. https://example.com' },
+            { category: 'internet', label: 'IP Address',    expr: "faker.internet.ip()",                desc: 'e.g. 192.168.0.1' },
+            { category: 'internet', label: 'Password',      expr: "faker.internet.password()",          desc: 'e.g. xK9#mP2!' },
+            { category: 'phone',    label: 'Phone Number',  expr: "faker.phone.number()",               desc: 'e.g. +1-800-555-0100' },
+            { category: 'location', label: 'City',          expr: "faker.location.city()",              desc: 'e.g. Sydney' },
+            { category: 'location', label: 'Country',       expr: "faker.location.country()",           desc: 'e.g. Australia' },
+            { category: 'location', label: 'Street',        expr: "faker.location.streetAddress()",     desc: 'e.g. 123 Main St' },
+            { category: 'location', label: 'Zip Code',      expr: "faker.location.zipCode()",           desc: 'e.g. 90210' },
+            { category: 'lorem',    label: 'Word',          expr: "faker.lorem.word()",                 desc: 'e.g. lorem' },
+            { category: 'lorem',    label: 'Sentence',      expr: "faker.lorem.sentence()",             desc: 'e.g. Lorem ipsum...' },
+            { category: 'lorem',    label: 'Paragraph',     expr: "faker.lorem.paragraph()",            desc: 'One paragraph' },
+            { category: 'lorem',    label: 'Paragraphs',    expr: "faker.lorem.paragraph({ min: 1, max: 3 })", desc: '1–3 paragraphs' },
+            { category: 'date',     label: 'Recent',        expr: "faker.date.recent().toISOString()",  desc: 'Recent date/time' },
+            { category: 'date',     label: 'Past',          expr: "faker.date.past().toISOString()",    desc: 'Past date' },
+            { category: 'date',     label: 'Future',        expr: "faker.date.future().toISOString()",  desc: 'Future date' },
+            { category: 'finance',  label: 'Amount',        expr: "faker.finance.amount()",             desc: 'e.g. 123.45' },
+            { category: 'finance',  label: 'Currency',      expr: "faker.finance.currencyCode()",       desc: 'e.g. USD' },
+            { category: 'company',  label: 'Company Name',  expr: "faker.company.name()",               desc: 'e.g. Acme Corp' },
+            { category: 'string',   label: 'UUID',          expr: "faker.string.uuid()",                desc: 'e.g. 550e8400-...' },
+            { category: 'number',   label: 'Integer',       expr: "faker.number.int({ min: 1, max: 100 })", desc: '1–100' },
+            { category: 'datatype', label: 'Boolean',       expr: "faker.datatype.boolean()",           desc: 'true or false' },
+        ];
+
         function apiExplorer() {
             return {
                 grouped: window.__apiExplorerEndpoints,
@@ -238,6 +292,12 @@
                 editingEnvBaseUrl: '',
                 editingEnvVars: [],
 
+                // Faker browser
+                showFakerBrowser: false,
+                fakerTargetField: null,
+                fakerSearch: '',
+                fakerActiveCategory: 'all',
+
                 // Environment selector (Pines)
                 envSelOpen: false,
                 envSelActiveItem: null,
@@ -254,6 +314,7 @@
                 filteredEndpoints: [],
                 filteredGrouped: {},
                 fuse: null,
+                openAccordions: new Set(),
 
                 init() {
                     this.baseUrl = window.__apiExplorerAppUrl;
@@ -394,10 +455,29 @@
                     this.activeAccordion = (this.activeAccordion == id) ? '' : id;
                 },
 
+                isGroupOpen(groupName) {
+                    // If searching, check if group is in openAccordions
+                    if (this.searchQuery) {
+                        return this.openAccordions.has(groupName);
+                    }
+                    // Otherwise use normal accordion state
+                    return this.activeAccordion === groupName;
+                },
+
+                toggleGroupAccordion(groupName) {
+                    // If searching, don't allow toggling (keep all open)
+                    if (this.searchQuery) {
+                        return;
+                    }
+                    // Otherwise toggle normally
+                    this.setActiveAccordion(groupName);
+                },
+
                 performSearch() {
                     if (!this.searchQuery) {
                         this.filteredGrouped = {};
                         this.filteredEndpoints = [];
+                        this.openAccordions.clear();
                         return;
                     }
 
@@ -406,6 +486,12 @@
 
                     // Build filtered tree structure maintaining hierarchy
                     this.filteredGrouped = this.buildFilteredTree(this.grouped, this.filteredEndpoints);
+
+                    // Open all accordions in the filtered tree
+                    this.openAccordions.clear();
+                    for (const groupName of Object.keys(this.filteredGrouped)) {
+                        this.openAccordions.add(groupName);
+                    }
                 },
 
                 buildFilteredTree(grouped, matchingEndpoints) {
@@ -961,8 +1047,27 @@
                     return bestMatch;
                 },
 
+                applyFaker(str) {
+                    if (!str || typeof str !== 'string') return str;
+                    const charClass = '[^{' + '}]';
+                    const regexStr = '\\{\\{(faker\\.' + charClass + '*(?:\\{' + charClass + '*\\}' + charClass + '*)*)\\}\\}';
+                    const pattern = new RegExp(regexStr, 'g');
+                    return str.replace(pattern, (match, expr) => {
+                        try {
+                            if (typeof window.faker === 'undefined') {
+                                return '[faker.js not loaded]';
+                            }
+                            // expr already includes 'faker.' prefix from regex, so use it directly
+                            return new Function('faker', 'return ' + expr)(window.faker);
+                        } catch (e) {
+                            return '[faker error: ' + e.message + ']';
+                        }
+                    });
+                },
+
                 applyVars(text) {
                     if (typeof text !== 'string') return text;
+                    text = this.applyFaker(text); // resolve faker expressions first
                     return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
                         return this.envVars[key] !== undefined ? this.envVars[key] : match;
                     });
@@ -995,7 +1100,6 @@
                         : `{{ route("api-explorer.environments.index") }}/${encodeURIComponent(this.editingEnv)}`;
 
                     const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
-                    console.log('Saving environment:', { isNew, name: this.editingEnvName, url, csrfToken: !!csrfToken });
 
                     try {
                         const res = await fetch(url, {
@@ -1007,11 +1111,8 @@
                             body: JSON.stringify({ name: this.editingEnvName, baseUrl: this.editingEnvBaseUrl, vars }),
                         });
 
-                        console.log('Save response status:', res.status);
-
                         if (res.ok) {
                             const responseData = await res.json();
-                            console.log('Environment saved successfully:', responseData);
                             await this.loadEnvironments();
                             if (this.activeEnv === this.editingEnv || this.activeEnv === this.editingEnvName) {
                                 await this.loadEnvVars(this.editingEnvName);
@@ -1092,6 +1193,44 @@
                 removeEnvVar(index) {
                     this.editingEnvVars.splice(index, 1);
                 },
+
+                insertFakerExpr(methodOrExpr) {
+                    if (!this.fakerTargetField) {
+                        return;
+                    }
+
+                    // Handle both method object and expression string
+                    let expr = typeof methodOrExpr === 'string' ? methodOrExpr : (methodOrExpr && methodOrExpr.expr ? methodOrExpr.expr : '');
+
+                    if (!expr) {
+                        return;
+                    }
+
+                    const currentValue = this.body[this.fakerTargetField] || '';
+                    const exprStr = '@{{' + expr + '}}';
+                    this.body[this.fakerTargetField] = currentValue ? `${currentValue} ${exprStr}` : exprStr;
+                    this.persistEndpointState();
+
+                    this.showFakerBrowser = false;
+                    this.fakerSearch = '';
+                    this.fakerActiveCategory = 'all';
+                },
+
+                fakerCategories() {
+                    const seen = new Set();
+                    return [{ id: 'all', label: 'All' }, ...fakerMethods
+                        .map(m => ({ id: m.category, label: m.category.charAt(0).toUpperCase() + m.category.slice(1) }))
+                        .filter(c => seen.has(c.id) ? false : seen.add(c.id))];
+                },
+
+                fakerFilteredMethods() {
+                    return fakerMethods.filter(m => {
+                        const matchesCategory = this.fakerActiveCategory === 'all' || m.category === this.fakerActiveCategory;
+                        const q = this.fakerSearch.toLowerCase();
+                        const matchesSearch = !q || m.label.toLowerCase().includes(q) || m.category.toLowerCase().includes(q) || m.expr.toLowerCase().includes(q);
+                        return matchesCategory && matchesSearch;
+                    });
+                },
             }
         }
     </script>
@@ -1108,6 +1247,9 @@
         .json-viewer .null { color: #6f42c1; }
         .json-viewer .key { color: #24292e; font-weight: bold; }
     </style>
+
+    <!-- Faker Browser -->
+    @include('api-explorer::partials.faker-browser')
 
     <!-- Environment Manager -->
     @include('api-explorer::partials.environments')

@@ -119,7 +119,7 @@
 
             <!-- Body Tab -->
             <div id="tab-body" role="tabpanel" x-show="activeTab === 'body'" class="p-6 space-y-4">
-                <template x-if="active && active.fields" x-for="field in active.fields" :key="field.name">
+                <template x-for="field in active && active.fields ? active.fields : []" :key="field.name">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
                             <span x-text="field.name"></span>
@@ -127,22 +127,38 @@
                             <span x-show="!field.required" class="text-gray-500 font-normal">(optional)</span>
                         </label>
                         <template x-if="field.inputType === 'text'">
-                            <input
-                                x-model="body[field.name]"
-                                @input="persistEndpointState()"
-                                type="text"
-                                :placeholder="field.validationHint || 'Enter ' + field.name"
-                                class="w-full h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
-                            />
+                            <div class="flex gap-2 items-center">
+                                <input
+                                    x-model="body[field.name]"
+                                    @input="persistEndpointState()"
+                                    type="text"
+                                    :placeholder="field.validationHint || 'Enter ' + field.name"
+                                    class="flex-1 h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                />
+                                <button
+                                    type="button"
+                                    @click="fakerTargetField = field.name; showFakerBrowser = true; fakerSearch = ''; fakerActiveCategory = 'all'"
+                                    title="Insert faker expression"
+                                    class="shrink-0 h-10 px-3 text-sm text-neutral-500 bg-neutral-50 border border-neutral-200 rounded-md hover:bg-neutral-100 hover:text-neutral-600"
+                                >⚡</button>
+                            </div>
                         </template>
                         <template x-if="field.inputType === 'textarea'">
-                            <textarea
-                                x-model="body[field.name]"
-                                @input="persistEndpointState()"
-                                :placeholder="field.validationHint || 'Enter ' + field.name"
-                                rows="4"
-                                class="w-full px-3 py-2 text-sm font-mono bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
-                            ></textarea>
+                            <div class="flex gap-2">
+                                <textarea
+                                    x-model="body[field.name]"
+                                    @input="persistEndpointState()"
+                                    :placeholder="field.validationHint || 'Enter ' + field.name"
+                                    rows="4"
+                                    class="flex-1 px-3 py-2 text-sm font-mono bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                ></textarea>
+                                <button
+                                    type="button"
+                                    @click="fakerTargetField = field.name; showFakerBrowser = true; fakerSearch = ''; fakerActiveCategory = 'all'"
+                                    title="Insert faker expression"
+                                    class="shrink-0 h-10 px-3 text-sm text-neutral-500 bg-neutral-50 border border-neutral-200 rounded-md hover:bg-neutral-100 hover:text-neutral-600 self-start"
+                                >⚡</button>
+                            </div>
                         </template>
                         <template x-if="field.inputType === 'number'">
                             <input

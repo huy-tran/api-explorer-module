@@ -1,16 +1,16 @@
 <!-- Module Accordion (Pines Style) -->
-<div :class="{ 'border-neutral-200 bg-blue-50/30' : activeAccordion==groupName, 'border-transparent hover:border-neutral-100' : activeAccordion!=groupName }" class="duration-200 ease-out bg-white border rounded-md cursor-pointer group">
-    <button @click="setActiveAccordion(groupName)" class="flex items-center justify-between w-full px-4 py-3 font-semibold text-left select-none">
+<div :class="{ 'border-neutral-200 bg-blue-50/30' : isGroupOpen(groupName), 'border-transparent hover:border-neutral-100' : !isGroupOpen(groupName) }" class="duration-200 ease-out bg-white border rounded-md cursor-pointer group">
+    <button @click="toggleGroupAccordion(groupName)" class="flex items-center justify-between w-full px-4 py-3 font-semibold text-left select-none">
         <span x-text="groupName" class="text-sm text-gray-700"></span>
         <!-- Pines-style icon (+ that rotates to x) -->
-        <div :class="{ 'rotate-90': activeAccordion==groupName }" class="relative flex items-center justify-center w-2.5 h-2.5 duration-300 ease-out flex-shrink-0">
+        <div :class="{ 'rotate-90': isGroupOpen(groupName) }" class="relative flex items-center justify-center w-2.5 h-2.5 duration-300 ease-out flex-shrink-0">
             <div class="absolute w-0.5 h-full bg-gray-400 group-hover:bg-gray-600 rounded-full"></div>
-            <div :class="{ 'rotate-90': activeAccordion==groupName }" class="absolute w-full h-0.5 ease duration-500 bg-gray-400 group-hover:bg-gray-600 rounded-full"></div>
+            <div :class="{ 'rotate-90': isGroupOpen(groupName) }" class="absolute w-full h-0.5 ease duration-500 bg-gray-400 group-hover:bg-gray-600 rounded-full"></div>
         </div>
     </button>
 
     <!-- Accordion Content -->
-    <div x-show="activeAccordion==groupName" x-collapse x-cloak class="overflow-hidden">
+    <div x-show="isGroupOpen(groupName)" x-collapse x-cloak class="overflow-hidden">
         <div class="px-4 pb-3 space-y-1">
             <!-- Render endpoints at this level -->
             <template x-if="group.__endpoints && group.__endpoints.length">
