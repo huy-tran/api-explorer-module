@@ -22,6 +22,48 @@
             </div>
         </div>
 
+        <!-- Rate Limit Info -->
+        <template x-if="extractRateLimit()">
+            <div class="rounded bg-white dark:bg-gray-900 p-4 shadow dark:shadow-black/20">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <i class="fas fa-gauge text-amber-500"></i>
+                            Rate Limit
+                        </h3>
+                        <span class="text-sm font-mono text-gray-600 dark:text-gray-400" x-text="`${extractRateLimit().remaining} / ${extractRateLimit().limit}`"></span>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="space-y-1">
+                        <div class="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+                            <div
+                                class="h-full rounded-full transition-all"
+                                :class="{
+                                    'bg-green-500': extractRateLimit().percentageUsed <= 50,
+                                    'bg-amber-500': extractRateLimit().percentageUsed > 50 && extractRateLimit().percentageUsed <= 80,
+                                    'bg-red-500': extractRateLimit().percentageUsed > 80
+                                }"
+                                :style="`width: ${extractRateLimit().percentageUsed}%`"
+                            ></div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                            <span x-text="`${extractRateLimit().percentageUsed}% used`"></span>
+                            <span x-text="`${extractRateLimit().used} requests used`"></span>
+                        </div>
+                    </div>
+
+                    <!-- Reset Time -->
+                    <template x-if="extractRateLimit().resetIn">
+                        <div class="pt-2 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400">
+                            <span>Resets in </span>
+                            <span class="font-mono font-medium" x-text="formatResetTime(extractRateLimit().resetIn)"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
         <!-- Response Tabs Card -->
         <div class="rounded bg-white dark:bg-gray-900 shadow dark:shadow-black/20">
             <!-- Pines-style Tabs -->

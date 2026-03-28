@@ -1195,6 +1195,57 @@
                     return 'bg-red-100 text-red-700';
                 },
 
+                extractRateLimit() {
+                    if (!this.response || !this.response.headers) return null;
+
+                    const headers = this.response.headers;
+                    const headerKeys = Object.keys(headers);
+
+                    // Try common rate limit header patterns
+                    const limitKey = headerKeys.find(k => k.toLowerCase().includes('ratelimit') && k.toLowerCase().includes('limit'));
+                    const remainingKey = headerKeys.find(k => k.toLowerCase().includes('ratelimit') && k.toLowerCase().includes('remaining'));
+                    const resetKey = headerKeys.find(k => k.toLowerCase().includes('ratelimit') && k.toLowerCase().includes('reset'));
+
+                    if (!limitKey || !remainingKey) return null;
+
+                    const limit = parseInt(headers[limitKey], 10);
+                    const remaining = parseInt(headers[remainingKey], 10);
+                    const resetValue = resetKey ? headers[resetKey] : null;
+
+                    if (isNaN(limit) || isNaN(remaining)) return null;
+
+                    let resetTime = null;
+                    let resetIn = null;
+
+                    if (resetValue) {
+                        // Try to parse as Unix timestamp (seconds)
+                        const resetTimestamp = parseInt(resetValue, 10);
+                        if (!isNaN(resetTimestamp)) {
+                            const resetMs = resetTimestamp * 1000;
+                            const now = Date.now();
+                            if (resetMs > now) {
+                                resetTime = new Date(resetMs);
+                                resetIn = Math.ceil((resetMs - now) / 1000);
+                            }
+                        }
+                    }
+
+                    return {
+                        limit,
+                        remaining,
+                        used: limit - remaining,
+                        percentageUsed: Math.round((limit - remaining) / limit * 100),
+                        resetTime,
+                        resetIn,
+                    };
+                },
+
+                formatResetTime(seconds) {
+                    if (seconds < 60) return `${seconds}s`;
+                    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+                    return `${Math.floor(seconds / 3600)}h`;
+                },
+
                 copyToClipboard(text) {
                     navigator.clipboard.writeText(JSON.stringify(text, null, 2));
                 },
