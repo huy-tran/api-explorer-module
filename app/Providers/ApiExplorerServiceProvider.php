@@ -12,7 +12,7 @@ class ApiExplorerServiceProvider extends ServiceProvider
 
     private function basePath(string $path = ''): string
     {
-        return dirname(__DIR__, 2) . ($path ? '/' . $path : '');
+        return dirname(__DIR__, 2).($path ? '/'.$path : '');
     }
 
     public function boot(): void
