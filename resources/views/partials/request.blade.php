@@ -248,7 +248,22 @@
                                 class="w-full"
                             />
                         </template>
-                        <template x-if="field.inputType === 'select'">
+                        <!-- Simple select for In attribute fields -->
+                        <template x-if="field.inputType === 'select' && field.isInAttribute">
+                            <select
+                                x-model="body[field.name]"
+                                @change="persistEndpointState()"
+                                class="w-full h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                            >
+                                <option value="">-- Select --</option>
+                                <template x-for="enumCase in field.enumCases || []" :key="enumCase">
+                                    <option :value="enumCase" x-text="enumCase"></option>
+                                </template>
+                            </select>
+                        </template>
+
+                        <!-- Pines select for BackedEnum fields -->
+                        <template x-if="field.inputType === 'select' && !field.isInAttribute">
                             <div
                                 x-data="piinesSelect(
                                     [{ title: '-- Select --', value: '' }, ...field.enumCases.map(c => ({ title: c, value: c }))],
@@ -306,9 +321,87 @@
                         <template x-if="field.isNested">
                             <details class="rounded border border-gray-300 p-3">
                                 <summary class="cursor-pointer font-medium text-gray-700">Expand <span x-text="field.nestedDtoClass"></span></summary>
-                                <div class="mt-3 space-y-3 pl-4">
-                                    <!-- Nested fields would go here - simplified for now -->
-                                    <p class="text-sm text-gray-500">Nested DTO fields</p>
+                                <div class="mt-3 space-y-4 pl-4">
+                                    <template x-for="nestedField in field.nestedFields || []" :key="nestedField.name">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <label class="block text-sm font-medium text-gray-700">
+                                                    <span x-text="nestedField.name"></span>
+                                                    <span x-show="nestedField.required" class="text-red-600">*</span>
+                                                    <span x-show="!nestedField.required" class="text-gray-500 font-normal">(optional)</span>
+                                                </label>
+                                            </div>
+
+                                            <template x-if="nestedField.inputType === 'text'">
+                                                <input
+                                                    :value="getNestedValue(field.name, nestedField.name)"
+                                                    @input="setNestedValue(field.name, nestedField.name, $event.target.value)"
+                                                    type="text"
+                                                    :placeholder="nestedField.validationHint || 'Enter ' + nestedField.name"
+                                                    class="w-full h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                                />
+                                            </template>
+
+                                            <template x-if="nestedField.inputType === 'textarea'">
+                                                <textarea
+                                                    :value="getNestedValue(field.name, nestedField.name)"
+                                                    @input="setNestedValue(field.name, nestedField.name, $event.target.value)"
+                                                    :placeholder="nestedField.validationHint || 'Enter ' + nestedField.name"
+                                                    rows="3"
+                                                    class="w-full px-3 py-2 text-sm font-mono bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                                ></textarea>
+                                            </template>
+
+                                            <template x-if="nestedField.inputType === 'number'">
+                                                <input
+                                                    :value="getNestedValue(field.name, nestedField.name)"
+                                                    @input="setNestedValue(field.name, nestedField.name, $event.target.value)"
+                                                    type="number"
+                                                    :placeholder="nestedField.validationHint || 'Enter ' + nestedField.name"
+                                                    class="w-full h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                                />
+                                            </template>
+
+                                            <template x-if="nestedField.inputType === 'checkbox'">
+                                                <input
+                                                    :checked="getNestedValue(field.name, nestedField.name)"
+                                                    @change="setNestedValue(field.name, nestedField.name, $event.target.checked)"
+                                                    type="checkbox"
+                                                    class="h-4 w-4 rounded border border-gray-300"
+                                                />
+                                            </template>
+
+                                            <template x-if="nestedField.inputType === 'datetime-local'">
+                                                <input
+                                                    :value="getNestedValue(field.name, nestedField.name)"
+                                                    @input="setNestedValue(field.name, nestedField.name, $event.target.value)"
+                                                    type="datetime-local"
+                                                    class="w-full h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                                />
+                                            </template>
+
+                                            <template x-if="nestedField.inputType === 'file'">
+                                                <input
+                                                    @change="setNestedValue(field.name, nestedField.name, $event.target.files[0])"
+                                                    type="file"
+                                                    class="w-full"
+                                                />
+                                            </template>
+
+                                            <template x-if="nestedField.inputType === 'select'">
+                                                <select
+                                                    :value="getNestedValue(field.name, nestedField.name)"
+                                                    @change="setNestedValue(field.name, nestedField.name, $event.target.value)"
+                                                    class="w-full h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300"
+                                                >
+                                                    <option value="">-- Select --</option>
+                                                    <template x-for="enumCase in nestedField.enumCases || []" :key="enumCase">
+                                                        <option :value="enumCase" x-text="enumCase"></option>
+                                                    </template>
+                                                </select>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
                             </details>
                         </template>

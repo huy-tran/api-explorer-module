@@ -113,19 +113,34 @@ class DtoInspector
             $nestedFields = $this->reflectProperties($mapped['nestedDtoClass']);
         }
 
+        // Extract In attribute values if present
+        $inValues = $this->extractInAttributeValues($param);
+
+        // Use inValues as enumCases if no enumCases from type mapper
+        $enumCases = $mapped['enumCases'] ?? $inValues;
+
+        // If we have inValues, override inputType to select
+        $inputType = $mapped['inputType'];
+        $isInAttribute = false;
+        if ($inValues && ! $mapped['enumCases']) {
+            $inputType = 'select';
+            $isInAttribute = true;
+        }
+
         return [
             'name' => $param->getName(),
-            'inputType' => $mapped['inputType'],
+            'inputType' => $inputType,
             'required' => $required,
             'nullable' => $nullable,
             'isOptional' => $isOptional,
             'defaultValue' => $defaultValue,
-            'enumCases' => $mapped['enumCases'],
+            'enumCases' => $enumCases,
             'isArray' => $mapped['isArray'],
             'isNested' => $mapped['isNested'],
             'nestedDtoClass' => $mapped['nestedDtoClass'],
             'nestedFields' => $nestedFields,
             'validationHint' => $validationHint,
+            'isInAttribute' => $isInAttribute,
         ];
     }
 
@@ -198,6 +213,25 @@ class DtoInspector
                 }
 
                 return $shortName;
+            }
+        }
+
+        return null;
+    }
+
+    private function extractInAttributeValues(ReflectionParameter $param): ?array
+    {
+        foreach ($param->getAttributes() as $attr) {
+            $name = $attr->getName();
+
+            // Check for Spatie In validation attribute
+            if (str_ends_with($name, '\In')) {
+                $args = $attr->getArguments();
+                // The In attribute takes an array as first argument
+                if (! empty($args) && is_array($args[0])) {
+                    // Convert all values to strings for consistency
+                    return array_map('strval', $args[0]);
+                }
             }
         }
 

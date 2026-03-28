@@ -798,6 +798,21 @@
                     }
                 },
 
+                getNestedValue(parentKey, nestedKey) {
+                    if (!this.body[parentKey]) {
+                        return '';
+                    }
+                    return this.body[parentKey][nestedKey] || '';
+                },
+
+                setNestedValue(parentKey, nestedKey, value) {
+                    if (!this.body[parentKey]) {
+                        this.body[parentKey] = {};
+                    }
+                    this.body[parentKey][nestedKey] = value;
+                    this.persistEndpointState();
+                },
+
                 getFilteredBody() {
                     const filtered = {};
                     for (const [key, value] of Object.entries(this.body)) {
@@ -989,6 +1004,12 @@
                 },
 
                 highlightJson(obj) {
+                    // Handle non-object responses (strings, plain text, HTML)
+                    if (typeof obj === 'string') {
+                        // If it's already a string (non-JSON response), just escape HTML and return
+                        const escaped = obj.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        return '<pre class="text-gray-600 whitespace-pre-wrap break-words">' + escaped + '</pre>';
+                    }
                     const json = JSON.stringify(obj, null, 2);
                     return this.syntaxHighlight(json);
                 },
@@ -1119,6 +1140,10 @@
 
                 applyFaker(str) {
                     if (!str || typeof str !== 'string') return str;
+                    // Strip @ prefix from @{{faker...}} before regex matching
+                    while (str.includes(String.fromCharCode(64) + '{')) {
+                        str = str.replace(String.fromCharCode(64) + '{', '{');
+                    }
                     const charClass = '[^{' + '}]';
                     const regexStr = '\\{\\{(faker\\.' + charClass + '*(?:\\{' + charClass + '*\\}' + charClass + '*)*)\\}\\}';
                     const pattern = new RegExp(regexStr, 'g');
@@ -1245,15 +1270,23 @@
                     this.showEnvManager = true;
                 },
 
-                openEditEnv(name) {
-                    this.editingEnv = name;
-                    this.editingEnvName = name;
-                    this.editingEnvBaseUrl = this.activeEnvBaseUrl || window.__apiExplorerAppUrl;
-                    this.editingEnvVars = Object.entries(this.envVars).map(([key, value]) => ({ key, value }));
-                    if (this.editingEnvVars.length === 0) {
-                        this.editingEnvVars = [{ key: '', value: '' }];
+                async openEditEnv(name) {
+                    // Load the specific environment's data (not just active env's)
+                    try {
+                        const res = await fetch(`{{ route("api-explorer.environments.index") }}/${encodeURIComponent(name)}`);
+                        const data = await res.json();
+
+                        this.editingEnv = name;
+                        this.editingEnvName = name;
+                        this.editingEnvBaseUrl = data.baseUrl || window.__apiExplorerAppUrl;
+                        this.editingEnvVars = Object.entries(data.vars || {}).map(([key, value]) => ({ key, value }));
+                        if (this.editingEnvVars.length === 0) {
+                            this.editingEnvVars = [{ key: '', value: '' }];
+                        }
+                        this.showEnvManager = true;
+                    } catch (error) {
+                        console.error('Failed to load environment for editing:', error);
                     }
-                    this.showEnvManager = true;
                 },
 
                 addEnvVar() {
