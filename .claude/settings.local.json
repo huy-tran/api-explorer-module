@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__herd__get_site_information",
+      "WebFetch(domain:wiki.test)",
+      "Bash(grep:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "laravel-boost",
+    "herd"
+  ]
+}

@@ -16,7 +16,6 @@ A self-hosted API explorer for local development in Laravel applications. Automa
 - PHP 8.4+
 - Laravel 12+
 - `spatie/laravel-data` ^4.20
-- `spatie/laravel-fractal` ^6.4
 - `lorisleiva/laravel-actions` ^2.10
 
 ## Installation

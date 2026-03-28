@@ -13,7 +13,6 @@
     "require": {
         "php": "^8.4",
         "spatie/laravel-data": "^4.20",
-        "spatie/laravel-fractal": "^6.4",
         "lorisleiva/laravel-actions": "^2.10"
     },
     "extra": {
