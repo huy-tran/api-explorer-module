@@ -10,7 +10,7 @@
     </button>
 
     <!-- Accordion Content -->
-    <div x-show="isGroupOpen(groupName)" x-collapse x-cloak class="overflow-hidden">
+    <div x-show="isGroupOpen(groupName)" x-cloak class="overflow-hidden">
         <div class="px-4 pb-3 space-y-1">
             <!-- Render endpoints at this level -->
             <template x-if="group.__endpoints && group.__endpoints.length">
@@ -43,7 +43,7 @@
                         </div>
                     </button>
 
-                    <div x-show="nestedOpen" x-collapse x-cloak class="overflow-hidden">
+                    <div x-show="nestedOpen" x-cloak class="overflow-hidden">
                         <div class="px-3 pb-2 space-y-1">
                             <template x-if="nestedGroup.__endpoints && nestedGroup.__endpoints.length">
                                 <template x-for="endpoint in nestedGroup.__endpoints" :key="endpoint.name">
