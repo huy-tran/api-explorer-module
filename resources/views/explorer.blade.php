@@ -1450,7 +1450,28 @@
                 },
 
                 copyToClipboard(text) {
-                    navigator.clipboard.writeText(JSON.stringify(text, null, 2));
+                    const textToCopy = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
+
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(textToCopy).catch(() => {
+                            this.fallbackCopyToClipboard(textToCopy);
+                        });
+                    } else {
+                        this.fallbackCopyToClipboard(textToCopy);
+                    }
+                },
+
+                fallbackCopyToClipboard(text) {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                    } catch (err) {
+                        console.error('Copy failed:', err);
+                    }
+                    document.body.removeChild(textArea);
                 },
 
                 highlightJson(obj) {
