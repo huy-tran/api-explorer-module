@@ -85,6 +85,17 @@
                         <i class="fas fa-cog"></i>
                     </button>
                 </div>
+                <button
+                    @click="showHistoryModal = true"
+                    type="button"
+                    title="Request history"
+                    class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium tracking-wide text-neutral-500 transition-colors duration-100 rounded-md focus:outline-none bg-neutral-50 hover:text-neutral-600 hover:bg-neutral-100 relative"
+                >
+                    <i class="fas fa-history"></i>
+                    <template x-if="history.length > 0">
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full" x-text="history.length"></span>
+                    </template>
+                </button>
                 <button @click="toggleDark()" type="button" title="Toggle dark mode"
                     class="inline-flex items-center justify-center w-9 h-9 rounded-md text-neutral-500 hover:bg-neutral-100 dark:text-gray-400 dark:hover:bg-gray-800">
                     <i x-show="!dark" class="fas fa-moon"></i>
@@ -138,6 +149,103 @@
                 @include('api-explorer::partials.response')
             </div>
         </main>
+    </div>
+
+    <!-- Request History Modal -->
+    <div
+        x-show="showHistoryModal"
+        @click.away="showHistoryModal = false"
+        class="fixed inset-0 z-50 overflow-y-auto"
+        style="display: none;"
+        x-cloak
+    >
+        <div class="flex min-h-screen items-center justify-center bg-black/50 px-4 py-8">
+            <div
+                @click.stop
+                x-transition
+                class="relative w-full max-w-2xl rounded-lg bg-white dark:bg-gray-900 shadow-xl"
+            >
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <i class="fas fa-history"></i>
+                        Request History
+                    </h2>
+                    <button
+                        @click="showHistoryModal = false"
+                        type="button"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    >
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="max-h-[60vh] overflow-y-auto">
+                    <template x-if="history.length === 0">
+                        <div class="flex items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+                            <div class="text-center">
+                                <i class="fas fa-inbox text-4xl mb-3 opacity-50"></i>
+                                <p>No requests yet. Make an API request to see history.</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="history.length > 0">
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <template x-for="entry in history" :key="entry.id">
+                                <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                    <div class="flex items-center justify-between gap-3 mb-2">
+                                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                                            <span :class="methodColor(entry.method)" class="rounded px-2.5 py-1 font-bold text-sm flex-shrink-0" x-text="entry.method"></span>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="entry.name"></p>
+                                                <code class="text-xs font-mono text-gray-600 dark:text-gray-400 truncate block" x-text="entry.path"></code>
+                                            </div>
+                                        </div>
+                                        <span :class="statusColor(entry.status)" class="rounded px-2.5 py-1 font-bold text-sm flex-shrink-0" x-text="entry.status"></span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                        <span x-text="formatHistoryTime(entry.timestamp)"></span>
+                                        <span x-text="`${entry.time}ms`"></span>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <button
+                                            @click="rerunFromHistory(entry); showHistoryModal = false;"
+                                            type="button"
+                                            class="flex-1 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded transition-colors"
+                                        >
+                                            <i class="fas fa-redo mr-2"></i> Re-run
+                                        </button>
+                                        <button
+                                            @click="navigator.clipboard.writeText(JSON.stringify(entry.request, null, 2))"
+                                            type="button"
+                                            class="flex-1 px-3 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700 rounded transition-colors"
+                                        >
+                                            <i class="fas fa-copy mr-2"></i> Copy
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Footer -->
+                <div class="border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
+                    <span class="text-sm text-gray-600 dark:text-gray-400" x-text="`${history.length} / ${maxHistorySize} requests`"></span>
+                    <button
+                        @click="clearHistory()"
+                        type="button"
+                        class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 rounded transition-colors"
+                    >
+                        <i class="fas fa-trash mr-2"></i> Clear History
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Data Injection -->
@@ -388,6 +496,11 @@
                 fuse: null,
                 openAccordions: new Set(),
 
+                // Request/Response history
+                history: [],
+                showHistoryModal: false,
+                maxHistorySize: 50,
+
                 init() {
                     // Expose component to window for tree node click handlers
                     window.__apiExplorer = this;
@@ -463,6 +576,9 @@
                             }
                         }
                     });
+
+                    // Load history
+                    this.loadHistory();
                 },
 
                 sortGroupedData(grouped) {
@@ -952,6 +1068,23 @@
                                 this.response.token = token;
                             }
                         }
+
+                        // Add to history
+                        this.addToHistory({
+                            method: this.active.method.split('|')[0],
+                            path: this.active.path,
+                            name: this.active.name,
+                            status: response.status,
+                            statusText: response.statusText,
+                            time: this.response.time,
+                            timestamp: new Date(),
+                            request: {
+                                body: this.getFilteredBody(),
+                                pathParams: { ...this.pathParams },
+                                queryParams: this.queryParams.filter(qp => qp.enabled !== false),
+                            },
+                            response: this.response,
+                        });
                     } catch (error) {
                         this.response = {
                             error: error.message,
@@ -1162,6 +1295,76 @@
                         enabledFields: this.enabledFields,
                     };
                     localStorage.setItem('apiExplorer.endpointState', JSON.stringify(this.endpointState));
+                },
+
+                // History management
+                addToHistory(entry) {
+                    entry.id = Date.now() + Math.random();
+                    this.history.unshift(entry);
+
+                    // Keep history size under control
+                    if (this.history.length > this.maxHistorySize) {
+                        this.history = this.history.slice(0, this.maxHistorySize);
+                    }
+
+                    this.saveHistory();
+                },
+
+                rerunFromHistory(entry) {
+                    if (!this.active) return;
+
+                    // Restore request state
+                    this.body = entry.request.body || {};
+                    this.pathParams = entry.request.pathParams || {};
+                    this.queryParams = entry.request.queryParams || [];
+                    this.persistEndpointState();
+
+                    // Re-run request
+                    this.sendRequest();
+                },
+
+                loadHistory() {
+                    try {
+                        const saved = localStorage.getItem('apiExplorer.history');
+                        if (saved) {
+                            this.history = JSON.parse(saved).map(entry => ({
+                                ...entry,
+                                timestamp: new Date(entry.timestamp),
+                            }));
+                        }
+                    } catch {
+                        this.history = [];
+                    }
+                },
+
+                saveHistory() {
+                    try {
+                        localStorage.setItem('apiExplorer.history', JSON.stringify(this.history));
+                    } catch (e) {
+                        console.warn('Failed to save history to localStorage:', e);
+                    }
+                },
+
+                clearHistory() {
+                    if (!confirm('Clear all request history? This cannot be undone.')) return;
+                    this.history = [];
+                    localStorage.removeItem('apiExplorer.history');
+                },
+
+                formatHistoryTime(date) {
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffSeconds = Math.floor(diffMs / 1000);
+                    const diffMinutes = Math.floor(diffSeconds / 60);
+                    const diffHours = Math.floor(diffMinutes / 60);
+                    const diffDays = Math.floor(diffHours / 24);
+
+                    if (diffSeconds < 60) return 'just now';
+                    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+                    if (diffHours < 24) return `${diffHours}h ago`;
+                    if (diffDays < 7) return `${diffDays}d ago`;
+
+                    return date.toLocaleDateString();
                 },
 
                 formatTime() {
