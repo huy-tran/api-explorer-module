@@ -1143,6 +1143,16 @@
                     this.persistEndpointState();
                 },
 
+                resetAllFields() {
+                    if (!this.active) return;
+                    if (!confirm('Are you sure you want to clear all fields?')) return;
+
+                    this.body = {};
+                    this.enabledFields = {};
+                    this.queryParams = [];
+                    this.persistEndpointState();
+                },
+
                 persistEndpointState() {
                     if (!this.active) return;
                     this.endpointState[this.active.name] = {
