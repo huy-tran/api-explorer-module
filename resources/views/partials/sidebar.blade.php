@@ -1,5 +1,5 @@
 <aside
-    class="overflow-y-auto border-r border-gray-200 bg-white p-4 flex flex-col select-none relative"
+    class="overflow-y-auto border-r border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 p-4 flex flex-col select-none relative"
     :style="`width: ${sidebarWidth}px`"
     x-data="{ activeAccordion: '' }"
 >
@@ -11,9 +11,9 @@
             @keydown.escape="searchQuery = ''"
             type="text"
             placeholder="Search endpoints..."
-            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 focus:outline-none"
         />
-        <div x-show="searchQuery" class="mt-1 text-xs text-gray-500">
+        <div x-show="searchQuery" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
             <span x-text="`Found: ${filteredEndpoints.length} endpoint(s)`"></span>
         </div>
     </div>
@@ -27,7 +27,7 @@
         <!-- Show empty state when search yields no results -->
         <template x-if="searchQuery && Object.keys(filteredGrouped).length === 0">
             <div class="text-center py-6">
-                <p class="text-xs text-gray-500">No endpoints found matching your search.</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">No endpoints found matching your search.</p>
             </div>
         </template>
     </div>

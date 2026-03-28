@@ -10,8 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Noto+Serif+JP:wght@200..900&display=swap" rel="stylesheet">
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Dark Mode Config -->
+    <script>tailwind.config = { darkMode: 'class' }</script>
 
     <!-- Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -27,11 +33,11 @@
         document.dispatchEvent(new Event('fakerReady'));
     </script>
 </head>
-<body class="bg-gray-50" x-data="apiExplorer()" x-init="waitForFaker().then(() => init())" @keydown.enter.ctrl="sendRequest()">
+<body :class="dark ? 'bg-gray-950' : 'bg-gray-50'" x-data="apiExplorer()" x-init="waitForFaker().then(() => init())" @keydown.enter.ctrl="sendRequest()">
     <!-- Top Bar -->
-    <header class="border-b border-gray-200 bg-white">
+    <header class="border-b border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700">
         <div class="mx-auto flex h-16 items-center justify-between px-6">
-            <h1 class="text-2xl font-bold text-gray-900">API Explorer</h1>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">API Explorer</h1>
             <div class="flex items-center gap-4">
                 <!-- Environment Selector (Pines) -->
                 <div class="flex items-center gap-2">
@@ -44,12 +50,11 @@
                         class="relative w-56"
                     >
                         <button @click="envSelOpen = !envSelOpen"
-                            :class="{ 'ring-2 ring-offset-2 ring-neutral-400': !envSelOpen }"
                             type="button"
-                            class="relative min-h-[38px] flex items-center justify-between w-full py-2 pl-3 pr-10 text-left bg-white border rounded-md shadow-sm cursor-default border-gray-300 focus:outline-none text-sm">
-                            <span x-text="envSelSelectedItem && envSelSelectedItem.value ? envSelSelectedItem.title : 'No Environment'" class="truncate text-gray-700"></span>
+                            class="relative min-h-[38px] flex items-center justify-between w-full py-2 pl-3 pr-10 text-left bg-white border rounded-md shadow-sm cursor-default border-gray-300 dark:bg-gray-800 dark:border-gray-600 focus:outline-none text-sm">
+                            <span x-text="envSelSelectedItem && envSelSelectedItem.value ? envSelSelectedItem.title : 'No Environment'" class="truncate text-gray-700 dark:text-gray-300"></span>
                             <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5 text-gray-400"><path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clip-rule="evenodd"/></svg>
+                                <i class="fas fa-chevron-down text-gray-400"></i>
                             </span>
                         </button>
                         <ul x-show="envSelOpen" @click.away="envSelOpen = false"
@@ -57,15 +62,15 @@
                             x-transition:enter-start="opacity-0 -translate-y-1"
                             x-transition:enter-end="opacity-100"
                             :class="{ 'bottom-0 mb-10': envSelDropdownPosition === 'top', 'top-0 mt-10': envSelDropdownPosition === 'bottom' }"
-                            class="absolute z-10 w-full py-1 overflow-auto text-sm bg-white rounded-md shadow-md max-h-56 ring-1 ring-black ring-opacity-5 focus:outline-none"
+                            class="absolute z-10 w-full py-1 overflow-auto text-sm bg-white dark:bg-gray-800 rounded-md shadow-md max-h-56 focus:outline-none"
                             x-cloak>
                             <template x-for="item in envSelItems" :key="item.value">
                                 <li @click="envSelSelectedItem = item; envSelOpen = false;"
                                     :id="item.value + '-' + envSelId"
-                                    :class="{ 'bg-neutral-100 text-gray-900': envSelIsActive(item) }"
+                                    :class="{ 'bg-neutral-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100': envSelIsActive(item) }"
                                     @mousemove="envSelActiveItem = item"
-                                    class="relative flex items-center h-full py-2 pl-8 pr-4 text-gray-700 cursor-default select-none">
-                                    <svg x-show="envSelSelectedItem && envSelSelectedItem.value == item.value" class="absolute left-0 w-4 h-4 ml-2 stroke-current text-neutral-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    class="relative flex items-center h-full py-2 pl-8 pr-4 text-gray-700 dark:text-gray-300 cursor-default select-none">
+                                    <i x-show="envSelSelectedItem && envSelSelectedItem.value == item.value" class="fas fa-check absolute left-0 ml-2 text-neutral-400" style="font-size: 1rem;"></i>
                                     <span class="block font-medium truncate" x-text="item.title"></span>
                                 </li>
                             </template>
@@ -75,12 +80,17 @@
                         @click="activeEnv ? openEditEnv(activeEnv) : openNewEnv()"
                         type="button"
                         title="Manage environments"
-                        class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium tracking-wide text-neutral-500 transition-colors duration-100 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-neutral-100 bg-neutral-50 hover:text-neutral-600 hover:bg-neutral-100"
+                        class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium tracking-wide text-neutral-500 transition-colors duration-100 rounded-md focus:outline-none bg-neutral-50 hover:text-neutral-600 hover:bg-neutral-100"
                     >
-                        ⚙
+                        <i class="fas fa-cog"></i>
                     </button>
                 </div>
-                <div class="text-sm text-gray-600">
+                <button @click="toggleDark()" type="button" title="Toggle dark mode"
+                    class="inline-flex items-center justify-center w-9 h-9 rounded-md text-neutral-500 hover:bg-neutral-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                    <i x-show="!dark" class="fas fa-moon"></i>
+                    <i x-show="dark" x-cloak class="fas fa-sun"></i>
+                </button>
+                <div class="text-sm text-gray-600 dark:text-gray-400">
                     @if ($cacheEnabled)
                         Last scanned: <span x-text="formatTime()"></span>
                     @else
@@ -91,7 +101,7 @@
                     <form method="POST" action="{{ route('api-explorer.cache.purge') }}" style="display: inline;">
                         @method('DELETE')
                         @csrf
-                        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-red-500 transition-colors duration-100 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-red-100 bg-red-50 hover:text-red-600 hover:bg-red-100">
+                        <button type="submit" class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-red-500 transition-colors duration-100 rounded-md focus:outline-none bg-red-50 hover:text-red-600 hover:bg-red-100">
                             Purge Cache
                         </button>
                     </form>
@@ -109,12 +119,12 @@
         <main class="flex flex-1 flex-col overflow-hidden">
             <!-- Endpoint Header -->
             <template x-if="active">
-                <div class="border-b border-gray-200 bg-white px-6 py-3">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-3">
                     <div class="flex items-center gap-3">
                         <span :class="methodColor(active.method.split('|')[0])" class="rounded px-3 py-1 font-bold text-sm">
                             <span x-text="active.method.split('|')[0]"></span>
                         </span>
-                        <code x-text="getDisplayUri()" class="text-sm font-mono text-gray-700"></code>
+                        <code x-text="getDisplayUri()" class="text-sm font-mono text-gray-700 dark:text-gray-300"></code>
                     </div>
                 </div>
             </template>
@@ -311,6 +321,9 @@
                 isResizing: false,
                 resizeStartX: 0,
 
+                // Dark mode
+                dark: localStorage.getItem('apiExplorer.dark') === 'true',
+
                 // Environment variables
                 environments: [],
                 activeEnv: localStorage.getItem('apiExplorer.activeEnv') || null,
@@ -374,6 +387,9 @@
                 openAccordions: new Set(),
 
                 init() {
+                    // Apply dark mode immediately
+                    if (this.dark) document.documentElement.classList.add('dark');
+
                     this.baseUrl = window.__apiExplorerAppUrl;
                     try {
                         this.headers = JSON.parse(localStorage.getItem('apiExplorer.headers') || '[]');
@@ -976,6 +992,12 @@
                     localStorage.setItem('apiExplorer.headers', JSON.stringify(this.headers));
                 },
 
+                toggleDark() {
+                    this.dark = !this.dark;
+                    document.documentElement.classList.toggle('dark', this.dark);
+                    localStorage.setItem('apiExplorer.dark', String(this.dark));
+                },
+
                 addQueryParam() {
                     this.queryParams.push({ key: '', value: '', enabled: true });
                     this.persistEndpointState();
@@ -1391,6 +1413,14 @@
         .json-viewer .boolean { color: #d73a49; }
         .json-viewer .null { color: #6f42c1; }
         .json-viewer .key { color: #24292e; font-weight: bold; }
+
+        /* Dark mode syntax highlighting */
+        html.dark .json-viewer pre { background: #1a1a2e; }
+        html.dark .json-viewer .string { color: #6adf73; }
+        html.dark .json-viewer .number { color: #79b8ff; }
+        html.dark .json-viewer .boolean { color: #f97583; }
+        html.dark .json-viewer .null { color: #b392f0; }
+        html.dark .json-viewer .key { color: #e1e4e8; }
     </style>
 
     <!-- Faker Browser -->
