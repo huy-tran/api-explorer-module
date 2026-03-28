@@ -892,8 +892,8 @@
                     const indent = '&nbsp;'.repeat(depth * 2);
                     const nextIndent = '&nbsp;'.repeat((depth + 1) * 2);
 
-                    if (value === null) {
-                        return `${indent}<span class="null">null</span>`;
+                    if (value === undefined || value === null) {
+                        return `${indent}<span class="null">${value === undefined ? 'undefined' : 'null'}</span>`;
                     }
 
                     if (typeof value === 'boolean') {
@@ -1475,6 +1475,10 @@
                 },
 
                 highlightJson(obj) {
+                    // Handle undefined/null
+                    if (obj === undefined || obj === null) {
+                        return '<pre class="text-gray-600 whitespace-pre-wrap break-words">No response body</pre>';
+                    }
                     // Handle non-object responses (strings, plain text, HTML)
                     if (typeof obj === 'string') {
                         // If it's already a string (non-JSON response), just escape HTML and return
