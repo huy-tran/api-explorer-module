@@ -957,6 +957,19 @@
                     this.persistEndpointState();
                 },
 
+                addArrayItem(fieldName) {
+                    if (!Array.isArray(this.body[fieldName])) {
+                        this.body[fieldName] = [];
+                    }
+                    this.body[fieldName].push('');
+                    this.persistEndpointState();
+                },
+
+                removeArrayItem(fieldName, index) {
+                    this.body[fieldName].splice(index, 1);
+                    this.persistEndpointState();
+                },
+
                 persistEndpointState() {
                     if (!this.active) return;
                     this.endpointState[this.active.name] = {

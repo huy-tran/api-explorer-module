@@ -182,7 +182,7 @@
                                 <span x-show="!field.required" class="text-gray-500 font-normal">(optional)</span>
                             </label>
                         </div>
-                        <template x-if="field.inputType === 'text'">
+                        <template x-if="field.inputType === 'text' && !field.isArray">
                             <div class="flex gap-2 items-center">
                                 <input
                                     x-model="body[field.name]"
@@ -197,6 +197,31 @@
                                     title="Insert faker expression"
                                     class="shrink-0 h-10 px-3 text-sm text-neutral-500 bg-neutral-50 border border-neutral-200 rounded-md hover:bg-neutral-100 hover:text-neutral-600"
                                 >⚡</button>
+                            </div>
+                        </template>
+                        <template x-if="field.isArray">
+                            <div class="space-y-2">
+                                <template x-for="(item, index) in (body[field.name] || [])" :key="index">
+                                    <div class="flex gap-2 items-center">
+                                        <input
+                                            :value="item"
+                                            @input="body[field.name][index] = $event.target.value; persistEndpointState()"
+                                            type="text"
+                                            :placeholder="field.validationHint || 'Enter value'"
+                                            class="flex-1 h-10 px-3 py-2 text-sm bg-white border rounded-md border-neutral-300 ring-offset-background placeholder:text-neutral-500 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-neutral-400"
+                                        />
+                                        <button
+                                            @click="removeArrayItem(field.name, index)"
+                                            type="button"
+                                            class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-red-500 transition-colors duration-100 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-red-100 bg-red-50 hover:text-red-600 hover:bg-red-100"
+                                        >✕</button>
+                                    </div>
+                                </template>
+                                <button
+                                    @click="addArrayItem(field.name)"
+                                    type="button"
+                                    class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-neutral-500 transition-colors duration-100 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-neutral-100 bg-neutral-50 hover:text-neutral-600 hover:bg-neutral-100"
+                                >+ Add Item</button>
                             </div>
                         </template>
                         <template x-if="field.inputType === 'textarea'">
