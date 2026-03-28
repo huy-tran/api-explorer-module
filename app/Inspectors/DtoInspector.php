@@ -141,6 +141,7 @@ class DtoInspector
             'nestedFields' => $nestedFields,
             'validationHint' => $validationHint,
             'isInAttribute' => $isInAttribute,
+            'isFileField' => $inputType === 'file',
         ];
     }
 

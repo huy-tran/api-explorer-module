@@ -59,6 +59,17 @@
         <div class="flex-1 overflow-y-auto">
             <!-- Headers Tab -->
             <div id="tab-headers" role="tabpanel" x-show="activeTab === 'headers'" class="p-6 space-y-3">
+                <!-- File Upload Notice -->
+                <template x-if="active && active.fields && hasFileField(active.fields)">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex gap-3">
+                        <i class="fas fa-info-circle text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"></i>
+                        <div class="text-sm text-blue-800 dark:text-blue-300">
+                            <p class="font-medium">File upload detected</p>
+                            <p class="text-xs mt-1">Content-Type will automatically be set to <code class="bg-blue-100 dark:bg-blue-800 px-1.5 py-0.5 rounded">multipart/form-data</code></p>
+                        </div>
+                    </div>
+                </template>
+
                 <div class="space-y-2">
                     <template x-for="(header, index) in headers" :key="index">
                         <div class="flex gap-2 items-center">
@@ -94,13 +105,16 @@
                                 >
                                     <button @click="selectOpen = !selectOpen"
                                         type="button"
+                                        :disabled="header.key === 'Content-Type' && active && active.fields && hasFileField(active.fields)"
+                                        :title="header.key === 'Content-Type' && active && active.fields && hasFileField(active.fields) ? 'Automatically set to multipart/form-data for file uploads' : ''"
+                                        :class="header.key === 'Content-Type' && active && active.fields && hasFileField(active.fields) ? 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800' : ''"
                                         class="relative w-full h-10 flex items-center justify-between px-3 py-2 text-left bg-white dark:bg-gray-800 border rounded-md cursor-default border-neutral-300 dark:border-gray-600 focus:outline-none text-sm">
                                         <span x-text="selectedItem ? selectedItem.title : '-- Select --'" class="truncate text-gray-700 dark:text-gray-300"></span>
                                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                                             <i class="fas fa-chevron-down text-gray-400"></i>
                                         </span>
                                     </button>
-                                    <ul x-show="selectOpen"
+                                    <ul x-show="selectOpen && !(header.key === 'Content-Type' && active && active.fields && hasFileField(active.fields))"
                                         x-transition:enter="transition ease-out duration-50"
                                         x-transition:enter-start="opacity-0 -translate-y-1"
                                         x-transition:enter-end="opacity-100"
@@ -266,11 +280,24 @@
                             />
                         </template>
                         <template x-if="field.inputType === 'file'">
-                            <input
-                                @change="body[field.name] = $event.target.files[0]"
-                                type="file"
-                                class="w-full"
-                            />
+                            <div class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                                <input
+                                    @change="body[field.name] = $event.target.files[0]; persistEndpointState()"
+                                    type="file"
+                                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <div class="text-center pointer-events-none">
+                                    <i class="fas fa-cloud-arrow-up text-gray-400 text-2xl mb-2"></i>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                        <template x-if="!body[field.name]">
+                                            Click to browse or drag file here
+                                        </template>
+                                        <template x-if="body[field.name]">
+                                            <span x-text="body[field.name].name" class="font-medium text-gray-700 dark:text-gray-300"></span>
+                                        </template>
+                                    </p>
+                                </div>
+                            </div>
                         </template>
                         <!-- Simple select for In attribute fields -->
                         <template x-if="field.inputType === 'select' && field.isInAttribute">
@@ -404,11 +431,24 @@
                                             </template>
 
                                             <template x-if="nestedField.inputType === 'file'">
-                                                <input
-                                                    @change="setNestedValue(field.name, nestedField.name, $event.target.files[0])"
-                                                    type="file"
-                                                    class="w-full"
-                                                />
+                                                <div class="relative border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                                                    <input
+                                                        @change="setNestedValue(field.name, nestedField.name, $event.target.files[0])"
+                                                        type="file"
+                                                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                    />
+                                                    <div class="text-center pointer-events-none">
+                                                        <i class="fas fa-cloud-arrow-up text-gray-400 text-2xl mb-2"></i>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                            <template x-if="!getNestedValue(field.name, nestedField.name)">
+                                                                Click to browse or drag file here
+                                                            </template>
+                                                            <template x-if="getNestedValue(field.name, nestedField.name)">
+                                                                <span x-text="getNestedValue(field.name, nestedField.name).name" class="font-medium text-gray-700 dark:text-gray-300"></span>
+                                                            </template>
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </template>
 
                                             <template x-if="nestedField.inputType === 'select'">

@@ -5,7 +5,10 @@
       "WebFetch(domain:wiki.test)",
       "Bash(grep:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Read(//c/Users/HuyTran/Herd/wiki/**)",
+      "Bash(php artisan tinker --execute \":*)",
+      "Bash(herd php:*)"
     ]
   },
   "enabledMcpjsonServers": [

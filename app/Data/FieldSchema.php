@@ -21,5 +21,6 @@ class FieldSchema extends Data
         /** @var DataCollection<int, FieldSchema> */
         public readonly DataCollection $nestedFields = new DataCollection(self::class, []),
         public readonly ?string $validationHint = null,
+        public readonly bool $isFileField = false,
     ) {}
 }
