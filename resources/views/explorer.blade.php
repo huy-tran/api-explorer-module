@@ -315,6 +315,8 @@
                 pathParams: {},
                 endpointState: {},
                 activeTab: 'body',
+                responseTab: 'json',
+                expandedTreeNodes: {},
                 response: null,
                 loading: false,
                 sidebarWidth: 320,
@@ -387,6 +389,9 @@
                 openAccordions: new Set(),
 
                 init() {
+                    // Expose component to window for tree node click handlers
+                    window.__apiExplorer = this;
+
                     // Apply dark mode immediately
                     if (this.dark) document.documentElement.classList.add('dark');
 
@@ -734,6 +739,119 @@
                     }
                 },
 
+                repositionResponseTabMarker() {
+                    const container = document.querySelector('[x-ref="responseTabsContainer"]');
+                    if (!container) return;
+                    const activeBtn = container.querySelector(`[data-tab='${this.responseTab}']`);
+                    const marker = container.querySelector('[x-ref="responseTabMarker"]');
+                    if (activeBtn && marker && activeBtn.offsetParent !== null) {
+                        marker.style.width = activeBtn.offsetWidth + 'px';
+                        marker.style.height = activeBtn.offsetHeight + 'px';
+                        marker.style.left = activeBtn.offsetLeft + 'px';
+                    }
+                },
+
+                toggleTreeNode(path) {
+                    if (this.expandedTreeNodes[path]) {
+                        delete this.expandedTreeNodes[path];
+                    } else {
+                        this.expandedTreeNodes[path] = true;
+                    }
+                },
+
+                isTreeNodeExpanded(path) {
+                    return !!this.expandedTreeNodes[path];
+                },
+
+                renderTreeValue(value, path = 'root') {
+                    if (value === null) return '<span class="null">null</span>';
+                    if (typeof value === 'boolean') return `<span class="boolean">${value}</span>`;
+                    if (typeof value === 'number') return `<span class="number">${value}</span>`;
+                    if (typeof value === 'string') return `<span class="string">"${value.replace(/"/g, '\\"')}"</span>`;
+                    return '';
+                },
+
+                renderJsonTree(value, path = 'root', depth = 0) {
+                    const isExpanded = this.isTreeNodeExpanded(path);
+                    const indent = '&nbsp;'.repeat(depth * 2);
+                    const nextIndent = '&nbsp;'.repeat((depth + 1) * 2);
+
+                    if (value === null) {
+                        return `${indent}<span class="null">null</span>`;
+                    }
+
+                    if (typeof value === 'boolean') {
+                        return `${indent}<span class="boolean">${value}</span>`;
+                    }
+
+                    if (typeof value === 'number') {
+                        return `${indent}<span class="number">${value}</span>`;
+                    }
+
+                    if (typeof value === 'string') {
+                        return `${indent}<span class="string">"${value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"</span>`;
+                    }
+
+                    if (Array.isArray(value)) {
+                        const hasItems = value.length > 0;
+                        const bracket = hasItems ?
+                            `<span onclick="window.__apiExplorer.toggleTreeNode('${path}')" style="cursor: pointer; user-select: none;" title="Click to expand/collapse">
+                                <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" style="display: inline-block; width: 16px; text-align: center; color: currentColor; opacity: 0.6;"></i>
+                                <span class="key">[</span><span style="opacity: 0.6;">${value.length}</span><span class="key">]</span>
+                            </span>` :
+                            `<span class="key">[]</span>`;
+
+                        if (!hasItems) {
+                            return `${indent}${bracket}`;
+                        }
+
+                        let html = `${indent}${bracket}`;
+                        if (isExpanded) {
+                            value.forEach((item, index) => {
+                                const itemPath = `${path}[${index}]`;
+                                html += `<div>${this.renderJsonTree(item, itemPath, depth + 1)}</div>`;
+                            });
+                            html += `${indent}<span class="key">]</span>`;
+                        }
+                        return html;
+                    }
+
+                    if (typeof value === 'object') {
+                        const keys = Object.keys(value);
+                        const hasItems = keys.length > 0;
+                        const bracket = hasItems ?
+                            `<span onclick="window.__apiExplorer.toggleTreeNode('${path}')" style="cursor: pointer; user-select: none;" title="Click to expand/collapse">
+                                <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" style="display: inline-block; width: 16px; text-align: center; color: currentColor; opacity: 0.6;"></i>
+                                <span class="key">{</span><span style="opacity: 0.6;">${keys.length}</span><span class="key">}</span>
+                            </span>` :
+                            `<span class="key">{}</span>`;
+
+                        if (!hasItems) {
+                            return `${indent}${bracket}`;
+                        }
+
+                        let html = `${indent}${bracket}`;
+                        if (isExpanded) {
+                            keys.forEach((key, index) => {
+                                const itemPath = `${path}.${key}`;
+                                const item = value[key];
+                                const isLast = index === keys.length - 1;
+                                const isContainer = typeof item === 'object' && item !== null;
+
+                                if (isContainer) {
+                                    html += `<div>${nextIndent}<span class="key">"${key}"</span><span class="key">:</span> ${this.renderJsonTree(item, itemPath, depth + 1).replace(/^&nbsp;*/g, '')}</div>`;
+                                } else {
+                                    html += `<div>${nextIndent}<span class="key">"${key}"</span><span class="key">:</span> ${this.renderTreeValue(item, itemPath).replace(/^&nbsp;*/g, '')}</div>`;
+                                }
+                            });
+                            html += `${indent}<span class="key">}</span>`;
+                        }
+                        return html;
+                    }
+
+                    return indent + JSON.stringify(value);
+                },
+
                 extractPathParams(uri) {
                     const params = {};
                     const matches = uri.match(/\{(\w+)\}/g) || [];
@@ -824,6 +942,7 @@
                             time: Math.round(endTime - startTime),
                             headers,
                             body: parsedBody,
+                            rawBody: data,
                         };
 
                         // Auto-detect and show token button
@@ -840,6 +959,9 @@
                         };
                     } finally {
                         this.loading = false;
+                        Alpine.nextTick(() => {
+                            this.repositionResponseTabMarker();
+                        });
                     }
                 },
 
