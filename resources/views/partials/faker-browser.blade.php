@@ -66,5 +66,24 @@
                 <p x-show="fakerFilteredMethods().length === 0" class="col-span-2 text-sm text-gray-500 py-8 text-center">No methods match your search.</p>
             </div>
         </div>
+
+        <!-- Custom Expression -->
+        <div class="border-t border-neutral-200 px-4 py-3 flex gap-2 items-center bg-gray-50"
+             x-data="{ customExpr: '' }">
+            <span class="text-xs text-gray-500 whitespace-nowrap font-medium">Custom:</span>
+            <input
+                x-model="customExpr"
+                @keydown.enter.prevent="if (customExpr.trim()) { insertFakerExpr(customExpr.trim()); customExpr = ''; }"
+                type="text"
+                placeholder="faker.animal.bear()"
+                class="flex-1 h-9 px-3 py-1.5 text-sm font-mono bg-white border rounded-md border-neutral-300 placeholder:text-neutral-400 focus:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-neutral-400"
+            />
+            <button
+                @click="if (customExpr.trim()) { insertFakerExpr(customExpr.trim()); customExpr = ''; }"
+                type="button"
+                :disabled="!customExpr.trim()"
+                class="shrink-0 h-9 px-4 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            >Insert</button>
+        </div>
     </div>
 </div>
