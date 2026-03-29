@@ -6,12 +6,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\ActionRequest;
 use Lorisleiva\Actions\Concerns\AsAction;
+use Modules\ApiExplorer\Actions\Environment\Concerns\ValidatesEnvironmentName;
 use Modules\ApiExplorer\Data\EnvironmentData;
 use Modules\ApiExplorer\Services\EnvironmentParser;
 
 class GetEnvironment
 {
     use AsAction;
+    use ValidatesEnvironmentName;
 
     public function __construct(
         private readonly EnvironmentParser $parser,
@@ -28,7 +30,7 @@ class GetEnvironment
 
         abort_unless(Storage::disk('local')->exists($path), 404);
 
-        $contents = Storage::disk('local')->get($path);
+        $contents = Storage::disk('local')->get($path) ?? '';
         $baseUrl = $this->parser->parseBaseUrl($contents);
         $vars = $this->parser->parse($contents);
 
@@ -38,14 +40,5 @@ class GetEnvironment
     public function asController(ActionRequest $request, string $name): JsonResponse
     {
         return response()->json($this->handle($name));
-    }
-
-    private function validateName(string $name): void
-    {
-        abort_if(
-            basename($name) !== $name || ! preg_match('/^[a-zA-Z0-9_\-\[\] ]+$/', $name),
-            400,
-            'Invalid environment name.'
-        );
     }
 }

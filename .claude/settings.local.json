@@ -10,7 +10,13 @@
       "Bash(php artisan tinker --execute \":*)",
       "Bash(herd php:*)",
       "Bash(find C:UsersHuyTranHerdwikiModulesApiExplorer -type f -name *.blade.php -o -name *.html -o -name *.jsx -o -name *.tsx -o -name *.vue)",
-      "Bash(vendor/bin/pint --dirty)"
+      "Bash(vendor/bin/pint --dirty)",
+      "Bash(find /c/Users/HuyTran/Herd/wiki/Modules/ApiExplorer -not -path */.* -type f \\\\\\(-name *.js -o -name *.ts -o -name *.tsx -o -name *.jsx -o -name *.vue -o -name *.json -o -name *.css -o -name *.scss -o -name *.blade.php -o -name routes.php -o -name config.php \\\\\\))",
+      "Bash(find /c/Users/HuyTran/Herd/wiki/Modules/ApiExplorer -not -path */.* -type d)",
+      "Bash(php ./vendor/bin/pint --dirty --format agent)",
+      "Bash(php artisan:*)",
+      "Bash(php -r \"echo method_exists\\(Illuminate\\\\Console\\\\Command::class, ''handle''\\) ? ''yes'' : ''no'';\")",
+      "Bash(php -r \":*)"
     ]
   },
   "enabledMcpjsonServers": [

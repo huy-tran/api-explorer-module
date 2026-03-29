@@ -15,16 +15,16 @@ class FieldTypeMapper
     public function map(string $phpType, bool $nullable): array
     {
         return match (true) {
-            $phpType === 'bool' => $this->scalar('checkbox', $nullable),
-            in_array($phpType, ['int', 'float']) => $this->scalar('number', $nullable),
-            $phpType === 'string' => $this->scalar('text', $nullable),
+            $phpType === 'bool' => $this->scalar('checkbox'),
+            in_array($phpType, ['int', 'float']) => $this->scalar('number'),
+            $phpType === 'string' => $this->scalar('text'),
             $phpType === 'array' => $this->arrayType(),
-            $phpType === 'mixed' => $this->scalar('textarea', $nullable),
-            $this->isDateTime($phpType) => $this->scalar('datetime-local', $nullable),
-            $this->isFileUpload($phpType) => $this->scalar('file', $nullable),
+            $phpType === 'mixed' => $this->scalar('textarea'),
+            $this->isDateTime($phpType) => $this->scalar('datetime-local'),
+            $this->isFileUpload($phpType) => $this->scalar('file'),
             $this->isBackedEnum($phpType) => $this->enumType($phpType),
             $this->isSpatieData($phpType) => $this->nestedType($phpType),
-            default => $this->scalar('text', $nullable),
+            default => $this->scalar('text'),
         };
     }
 
@@ -50,7 +50,7 @@ class FieldTypeMapper
         return class_exists($type) && is_subclass_of($type, Data::class);
     }
 
-    private function scalar(string $inputType, bool $nullable): array
+    private function scalar(string $inputType): array
     {
         return [
             'inputType' => $inputType,

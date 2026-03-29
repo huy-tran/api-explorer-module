@@ -6,12 +6,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\ActionRequest;
 use Lorisleiva\Actions\Concerns\AsAction;
+use Modules\ApiExplorer\Actions\Environment\Concerns\ValidatesEnvironmentName;
 use Modules\ApiExplorer\Data\EnvironmentData;
 use Modules\ApiExplorer\Services\EnvironmentParser;
 
 class SaveEnvironment
 {
     use AsAction;
+    use ValidatesEnvironmentName;
 
     public function __construct(
         private readonly EnvironmentParser $parser,
@@ -27,6 +29,7 @@ class SaveEnvironment
 
         // If renaming, delete the old file
         if ($oldName && $oldName !== $data->name) {
+            $this->validateName($oldName);
             $oldPath = "api-explorer/environments/{$oldName}.md";
             if (Storage::disk('local')->exists($oldPath)) {
                 Storage::disk('local')->delete($oldPath);
@@ -55,14 +58,5 @@ class SaveEnvironment
         $data = EnvironmentData::from($request->validated());
 
         return response()->json($this->handle($data, $name));
-    }
-
-    private function validateName(string $name): void
-    {
-        abort_if(
-            basename($name) !== $name || ! preg_match('/^[a-zA-Z0-9_\-\[\] ]+$/', $name),
-            400,
-            'Invalid environment name.'
-        );
     }
 }

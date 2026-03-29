@@ -29,7 +29,9 @@ class ListEnvironments
             }
         }
 
-        return sort($names) ? $names : [];
+        sort($names);
+
+        return $names;
     }
 
     public function asController(ActionRequest $request): JsonResponse

@@ -6,10 +6,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\ActionRequest;
 use Lorisleiva\Actions\Concerns\AsAction;
+use Modules\ApiExplorer\Actions\Environment\Concerns\ValidatesEnvironmentName;
 
 class DeleteEnvironment
 {
     use AsAction;
+    use ValidatesEnvironmentName;
 
     /**
      * Delete an environment by name.
@@ -29,14 +31,5 @@ class DeleteEnvironment
         $this->handle($name);
 
         return response()->json(['deleted' => true]);
-    }
-
-    private function validateName(string $name): void
-    {
-        abort_if(
-            basename($name) !== $name || ! preg_match('/^[a-zA-Z0-9_\-\[\] ]+$/', $name),
-            400,
-            'Invalid environment name.'
-        );
     }
 }

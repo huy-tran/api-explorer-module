@@ -964,6 +964,7 @@
                 },
 
                 renderJsonTree(value, path = 'root', depth = 0, isLast = true, prefix = '') {
+                    const safePath = path.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     const isExpanded = this.isTreeNodeExpanded(path);
                     const indent = '&nbsp;&nbsp;';
                     const connector = depth === 0 ? '' : (isLast ? '<span style="color: #999; opacity: 0.6;">└&nbsp;---</span>&nbsp;' : '<span style="color: #999; opacity: 0.6;">|&nbsp;---</span>&nbsp;');
@@ -988,7 +989,7 @@
                     if (Array.isArray(value)) {
                         const hasItems = value.length > 0;
                         const bracket = hasItems ?
-                            `<span onclick="window.__apiExplorer.toggleTreeNode('${path}')" style="cursor: pointer; user-select: none;" title="Click to expand/collapse">
+                            `<span onclick="window.__apiExplorer.toggleTreeNode('${safePath}')" style="cursor: pointer; user-select: none;" title="Click to expand/collapse">
                                 <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" style="display: inline-block; width: 16px; text-align: center; color: currentColor; opacity: 0.6;"></i>
                                 <span class="key">[</span><span style="opacity: 0.6;">${value.length}</span><span class="key">]</span>
                             </span>` :
@@ -1015,7 +1016,7 @@
                         const keys = Object.keys(value);
                         const hasItems = keys.length > 0;
                         const bracket = hasItems ?
-                            `<span onclick="window.__apiExplorer.toggleTreeNode('${path}')" style="cursor: pointer; user-select: none;" title="Click to expand/collapse">
+                            `<span onclick="window.__apiExplorer.toggleTreeNode('${safePath}')" style="cursor: pointer; user-select: none;" title="Click to expand/collapse">
                                 <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'}" style="display: inline-block; width: 16px; text-align: center; color: currentColor; opacity: 0.6;"></i>
                                 <span class="key">{</span><span style="opacity: 0.6;">${keys.length}</span><span class="key">}</span>
                             </span>` :
