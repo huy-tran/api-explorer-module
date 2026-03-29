@@ -11,9 +11,9 @@
         }
     ],
     "require": {
-        "php": "^8.4",
-        "spatie/laravel-data": "^4.20",
-        "lorisleiva/laravel-actions": "^2.10"
+        "php": "^8.3",
+        "spatie/laravel-data": "^3|^4",
+        "lorisleiva/laravel-actions": "^2.0"
     },
     "extra": {
         "laravel": {
