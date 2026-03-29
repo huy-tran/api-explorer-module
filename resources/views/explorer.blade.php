@@ -1340,9 +1340,14 @@
                 },
 
                 rerunFromHistory(entry) {
-                    if (!this.active) return;
+                    // Find the endpoint by name
+                    const endpoint = this.allEndpoints.find(ep => ep.name === entry.name);
+                    if (!endpoint) return;
 
-                    // Restore request state
+                    // Select the endpoint (this sets up active, body defaults, etc)
+                    this.selectEndpoint(endpoint);
+
+                    // Restore request state from history
                     this.body = entry.request.body || {};
                     this.pathParams = entry.request.pathParams || {};
                     this.queryParams = entry.request.queryParams || [];
