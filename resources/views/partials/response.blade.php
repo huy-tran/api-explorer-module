@@ -134,7 +134,7 @@
                 <div x-show="responseTab === 'tree'" class="space-y-2">
                     <template x-if="typeof response?.body === 'object' && response?.body !== null">
                         <div class="json-viewer">
-                            <div class="overflow-x-auto rounded bg-gray-50 dark:bg-gray-950 p-3 text-sm font-mono text-gray-800 dark:text-gray-200" x-html="renderJsonTree(response?.body, 'root', 0)"></div>
+                            <div class="overflow-x-auto rounded bg-gray-50 dark:bg-gray-950 p-3 text-sm font-mono text-gray-800 dark:text-gray-200" x-html="renderJsonTree(response?.body, 'root', 0, true, '')"></div>
                         </div>
                     </template>
                     <template x-if="typeof response?.body !== 'object' || response?.body === null">

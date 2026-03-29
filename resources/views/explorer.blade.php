@@ -879,6 +879,26 @@
                     return !!this.expandedTreeNodes[path];
                 },
 
+                expandAllTreeNodes(value, path = 'root') {
+                    if (value === null || value === undefined || typeof value !== 'object') {
+                        return;
+                    }
+
+                    // Mark current node as expanded
+                    this.expandedTreeNodes[path] = true;
+
+                    // Recursively expand all children
+                    if (Array.isArray(value)) {
+                        value.forEach((item, index) => {
+                            this.expandAllTreeNodes(item, `${path}[${index}]`);
+                        });
+                    } else {
+                        Object.keys(value).forEach(key => {
+                            this.expandAllTreeNodes(value[key], `${path}.${key}`);
+                        });
+                    }
+                },
+
                 renderTreeValue(value, path = 'root') {
                     if (value === null) return '<span class="null">null</span>';
                     if (typeof value === 'boolean') return `<span class="boolean">${value}</span>`;
@@ -887,25 +907,26 @@
                     return '';
                 },
 
-                renderJsonTree(value, path = 'root', depth = 0) {
+                renderJsonTree(value, path = 'root', depth = 0, isLast = true, prefix = '') {
                     const isExpanded = this.isTreeNodeExpanded(path);
-                    const indent = '&nbsp;'.repeat(depth * 2);
-                    const nextIndent = '&nbsp;'.repeat((depth + 1) * 2);
+                    const indent = '&nbsp;&nbsp;';
+                    const connector = depth === 0 ? '' : (isLast ? '<span style="color: #999; opacity: 0.6;">└&nbsp;---</span>&nbsp;' : '<span style="color: #999; opacity: 0.6;">|&nbsp;---</span>&nbsp;');
+                    const nextPrefix = prefix + (isLast ? indent + '&nbsp;&nbsp;&nbsp;' : '<span style="color: #999; opacity: 0.6;">|</span>' + indent + '&nbsp;&nbsp;');
 
                     if (value === undefined || value === null) {
-                        return `${indent}<span class="null">${value === undefined ? 'undefined' : 'null'}</span>`;
+                        return `${prefix}${connector}<span class="null">${value === undefined ? 'undefined' : 'null'}</span>`;
                     }
 
                     if (typeof value === 'boolean') {
-                        return `${indent}<span class="boolean">${value}</span>`;
+                        return `${prefix}${connector}<span class="boolean">${value}</span>`;
                     }
 
                     if (typeof value === 'number') {
-                        return `${indent}<span class="number">${value}</span>`;
+                        return `${prefix}${connector}<span class="number">${value}</span>`;
                     }
 
                     if (typeof value === 'string') {
-                        return `${indent}<span class="string">"${value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"</span>`;
+                        return `${prefix}${connector}<span class="string">"${value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"</span>`;
                     }
 
                     if (Array.isArray(value)) {
@@ -918,16 +939,18 @@
                             `<span class="key">[]</span>`;
 
                         if (!hasItems) {
-                            return `${indent}${bracket}`;
+                            return `${prefix}${connector}${bracket}`;
                         }
 
-                        let html = `${indent}${bracket}`;
+                        let html = `${prefix}${connector}${bracket}`;
                         if (isExpanded) {
                             value.forEach((item, index) => {
                                 const itemPath = `${path}[${index}]`;
-                                html += `<div>${this.renderJsonTree(item, itemPath, depth + 1)}</div>`;
+                                const isLastItem = index === value.length - 1;
+                                const rendered = this.renderJsonTree(item, itemPath, depth + 1, isLastItem, nextPrefix);
+                                html += `<div>${rendered}</div>`;
                             });
-                            html += `${indent}<span class="key">]</span>`;
+                            html += `<div>${prefix}<span class="key">]</span></div>`;
                         }
                         return html;
                     }
@@ -943,29 +966,31 @@
                             `<span class="key">{}</span>`;
 
                         if (!hasItems) {
-                            return `${indent}${bracket}`;
+                            return `${prefix}${connector}${bracket}`;
                         }
 
-                        let html = `${indent}${bracket}`;
+                        let html = `${prefix}${connector}${bracket}`;
                         if (isExpanded) {
                             keys.forEach((key, index) => {
                                 const itemPath = `${path}.${key}`;
                                 const item = value[key];
-                                const isLast = index === keys.length - 1;
+                                const isLastItem = index === keys.length - 1;
                                 const isContainer = typeof item === 'object' && item !== null;
+                                const itemConnector = isLastItem ? '<span style="color: #999; opacity: 0.6;">└&nbsp;---</span>&nbsp;' : '<span style="color: #999; opacity: 0.6;">|&nbsp;---</span>&nbsp;';
 
                                 if (isContainer) {
-                                    html += `<div>${nextIndent}<span class="key">"${key}"</span><span class="key">:</span> ${this.renderJsonTree(item, itemPath, depth + 1).replace(/^&nbsp;*/g, '')}</div>`;
+                                    const rendered = this.renderJsonTree(item, itemPath, depth + 1, isLastItem, nextPrefix);
+                                    html += `<div>${nextPrefix}${itemConnector}<span class="key">"${key}"</span><span class="key">:</span> ${rendered.replace(/^.*?<\/span>&nbsp;/, '')}</div>`;
                                 } else {
-                                    html += `<div>${nextIndent}<span class="key">"${key}"</span><span class="key">:</span> ${this.renderTreeValue(item, itemPath).replace(/^&nbsp;*/g, '')}</div>`;
+                                    html += `<div>${nextPrefix}${itemConnector}<span class="key">"${key}"</span><span class="key">:</span> ${this.renderTreeValue(item, itemPath)}</div>`;
                                 }
                             });
-                            html += `${indent}<span class="key">}</span>`;
+                            html += `<div>${prefix}<span class="key">}</span></div>`;
                         }
                         return html;
                     }
 
-                    return indent + JSON.stringify(value);
+                    return prefix + connector + JSON.stringify(value);
                 },
 
                 extractPathParams(uri) {
@@ -1060,6 +1085,10 @@
                             body: parsedBody,
                             rawBody: data,
                         };
+
+                        // Expand all tree nodes by default
+                        this.expandedTreeNodes = {};
+                        this.expandAllTreeNodes(parsedBody);
 
                         // Auto-detect and show token button
                         if (typeof parsedBody === 'object' && parsedBody !== null) {
