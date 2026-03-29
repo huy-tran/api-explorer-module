@@ -33,17 +33,17 @@
 
             <!-- Render nested groups (sub-resources) -->
             <template x-for="(nestedGroup, nestedGroupName) in Object.fromEntries(Object.entries(group).filter(([k]) => k !== '__endpoints'))" :key="nestedGroupName">
-                <div x-data="{ nestedOpen: false }" :class="{ 'border-neutral-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50' : nestedOpen, 'border-transparent dark:border-transparent' : !nestedOpen }" class="duration-200 ease-out bg-white dark:bg-gray-900 border rounded-md cursor-pointer group mt-1">
-                    <button @click="nestedOpen = !nestedOpen" class="flex items-center justify-between w-full px-3 py-2 font-medium text-left select-none">
+                <div :class="{ 'border-neutral-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50' : isNestedGroupOpen(groupName, nestedGroupName), 'border-transparent dark:border-transparent' : !isNestedGroupOpen(groupName, nestedGroupName) }" class="duration-200 ease-out bg-white dark:bg-gray-900 border rounded-md cursor-pointer group mt-1">
+                    <button @click="toggleNestedGroup(groupName, nestedGroupName)" class="flex items-center justify-between w-full px-3 py-2 font-medium text-left select-none">
                         <span x-text="nestedGroupName" class="text-sm text-gray-600 dark:text-gray-400"></span>
                         <!-- Pines-style icon -->
-                        <div :class="{ 'rotate-90': nestedOpen }" class="relative flex items-center justify-center w-2 h-2 duration-300 ease-out flex-shrink-0">
+                        <div :class="{ 'rotate-90': isNestedGroupOpen(groupName, nestedGroupName) }" class="relative flex items-center justify-center w-2 h-2 duration-300 ease-out flex-shrink-0">
                             <div class="absolute w-0.5 h-full bg-gray-300 dark:bg-gray-600 rounded-full"></div>
-                            <div :class="{ 'rotate-90': nestedOpen }" class="absolute w-full h-0.5 ease duration-500 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                            <div :class="{ 'rotate-90': isNestedGroupOpen(groupName, nestedGroupName) }" class="absolute w-full h-0.5 ease duration-500 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                         </div>
                     </button>
 
-                    <div x-show="nestedOpen" x-cloak class="overflow-hidden">
+                    <div x-show="isNestedGroupOpen(groupName, nestedGroupName)" x-cloak class="overflow-hidden">
                         <div class="px-3 pb-2 space-y-1">
                             <template x-if="nestedGroup.__endpoints && nestedGroup.__endpoints.length">
                                 <template x-for="endpoint in nestedGroup.__endpoints" :key="endpoint.name">

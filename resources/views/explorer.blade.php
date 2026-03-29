@@ -495,6 +495,7 @@
                 filteredGrouped: {},
                 fuse: null,
                 openAccordions: new Set(),
+                openNestedGroups: new Set(),
 
                 // Request/Response history
                 history: [],
@@ -579,6 +580,26 @@
 
                     // Load history
                     this.loadHistory();
+
+                    // Check URL params to restore last endpoint
+                    const params = new URLSearchParams(window.location.search);
+                    const endpointName = params.get('endpoint');
+
+                    if (endpointName) {
+                        const endpoint = this.allEndpoints.find(ep => ep.name === endpointName);
+                        if (endpoint) {
+                            // Open the group(s) containing this endpoint
+                            const groupInfo = this.findGroupForEndpoint(endpointName);
+                            if (groupInfo) {
+                                this.activeAccordion = groupInfo.parent;
+                                if (groupInfo.nested) {
+                                    this.openNestedGroups.add(`${groupInfo.parent}|${groupInfo.nested}`);
+                                }
+                            }
+                            // Then select the endpoint
+                            this.selectEndpoint(endpoint);
+                        }
+                    }
                 },
 
                 sortGroupedData(grouped) {
@@ -675,6 +696,35 @@
                     }
                     // Otherwise toggle normally
                     this.setActiveAccordion(groupName);
+                },
+
+                findGroupForEndpoint(endpointName) {
+                    // Find which top-level group and nested group contains this endpoint
+                    for (const [groupName, group] of Object.entries(this.grouped)) {
+                        if (group.__endpoints && group.__endpoints.some(ep => ep.name === endpointName)) {
+                            return { parent: groupName };
+                        }
+                        // Check nested groups
+                        for (const [nestedName, nested] of Object.entries(group)) {
+                            if (nestedName !== '__endpoints' && nested.__endpoints && nested.__endpoints.some(ep => ep.name === endpointName)) {
+                                return { parent: groupName, nested: nestedName };
+                            }
+                        }
+                    }
+                    return null;
+                },
+
+                isNestedGroupOpen(parentGroup, nestedGroupName) {
+                    return this.openNestedGroups.has(`${parentGroup}|${nestedGroupName}`);
+                },
+
+                toggleNestedGroup(parentGroup, nestedGroupName) {
+                    const key = `${parentGroup}|${nestedGroupName}`;
+                    if (this.openNestedGroups.has(key)) {
+                        this.openNestedGroups.delete(key);
+                    } else {
+                        this.openNestedGroups.add(key);
+                    }
                 },
 
                 performSearch() {
@@ -838,7 +888,13 @@
                     this.active = endpoint;
                     this.response = null;
                     this.activeTab = Object.keys(this.pathParams).length > 0 ? 'params' : 'body';
+
+                    // Update URL with endpoint name (without full reload)
                     Alpine.nextTick(() => {
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('endpoint', endpoint.name);
+                        const newUrl = window.location.pathname + '?' + params.toString();
+                        window.history.replaceState(null, '', newUrl);
                         this.repositionTabMarker();
                     });
                 },
@@ -1098,6 +1154,9 @@
                             }
                         }
 
+                        // Save endpoint state (so refresh restores this request)
+                        this.persistEndpointState();
+
                         // Add to history
                         this.addToHistory({
                             method: this.active.method.split('|')[0],
@@ -1340,21 +1399,10 @@
                 },
 
                 rerunFromHistory(entry) {
-                    // Find the endpoint by name
-                    const endpoint = this.allEndpoints.find(ep => ep.name === entry.name);
-                    if (!endpoint) return;
-
-                    // Select the endpoint (this sets up active, body defaults, etc)
-                    this.selectEndpoint(endpoint);
-
-                    // Restore request state from history
-                    this.body = entry.request.body || {};
-                    this.pathParams = entry.request.pathParams || {};
-                    this.queryParams = entry.request.queryParams || [];
-                    this.persistEndpointState();
-
-                    // Re-run request
-                    this.sendRequest();
+                    // Update URL with endpoint name and reload to restore last request
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('endpoint', entry.name);
+                    window.location.href = window.location.pathname + '?' + params.toString();
                 },
 
                 loadHistory() {

@@ -1,7 +1,6 @@
 <aside
     class="overflow-y-auto border-r border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 p-4 flex flex-col select-none relative"
     :style="`width: ${sidebarWidth}px`"
-    x-data="{ activeAccordion: '' }"
 >
     <!-- Search Input -->
     <div class="mb-4">

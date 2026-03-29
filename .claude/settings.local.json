@@ -9,7 +9,8 @@
       "Read(//c/Users/HuyTran/Herd/wiki/**)",
       "Bash(php artisan tinker --execute \":*)",
       "Bash(herd php:*)",
-      "Bash(find C:UsersHuyTranHerdwikiModulesApiExplorer -type f -name *.blade.php -o -name *.html -o -name *.jsx -o -name *.tsx -o -name *.vue)"
+      "Bash(find C:UsersHuyTranHerdwikiModulesApiExplorer -type f -name *.blade.php -o -name *.html -o -name *.jsx -o -name *.tsx -o -name *.vue)",
+      "Bash(vendor/bin/pint --dirty)"
     ]
   },
   "enabledMcpjsonServers": [
