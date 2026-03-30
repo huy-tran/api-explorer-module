@@ -6,8 +6,7 @@
     <div class="mb-4">
         <input
             x-model="searchQuery"
-            @input="performSearch()"
-            @keydown.escape="searchQuery = ''; performSearch()"
+            @keydown.escape="searchQuery = ''"
             type="text"
             placeholder="Search endpoints..."
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 focus:outline-none"

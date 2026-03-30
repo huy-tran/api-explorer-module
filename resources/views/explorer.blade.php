@@ -550,6 +550,9 @@
                         includeScore: true,
                     });
 
+                    // Watch searchQuery so performSearch always runs after Alpine syncs the value
+                    this.$watch('searchQuery', () => this.performSearch());
+
                     // Load environments
                     this.loadEnvironments();
                     if (this.activeEnv) {
