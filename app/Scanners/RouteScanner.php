@@ -46,8 +46,8 @@ class RouteScanner
             'method' => implode('|', $methods),
             'uri' => '/'.$route->uri(),
             'name' => $route->getName() ?? '',
-            'middleware' => $route->gatherMiddleware(),
-            'action' => $route->getAction(),
+            'middleware' => array_values(array_filter($route->gatherMiddleware(), 'is_string')),
+            'action' => $route->getActionName(),
         ];
     }
 }

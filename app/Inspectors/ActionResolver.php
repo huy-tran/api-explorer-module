@@ -6,20 +6,14 @@ use Lorisleiva\Actions\Concerns\AsAction;
 
 class ActionResolver
 {
-    public function resolve(array $routeAction): ?string
+    public function resolve(string $actionName): ?string
     {
-        $uses = $routeAction['uses'] ?? null;
-
-        if (! $uses) {
+        if ($actionName === '' || $actionName === 'Closure') {
             return null;
         }
 
-        if (is_string($uses)) {
-            // Strip @method suffix if present (Controller@method style)
-            return str_contains($uses, '@') ? explode('@', $uses)[0] : $uses;
-        }
-
-        return null;
+        // Strip @method suffix if present (Controller@method style)
+        return str_contains($actionName, '@') ? explode('@', $actionName)[0] : $actionName;
     }
 
     public function isLaravelAction(string $class): bool
