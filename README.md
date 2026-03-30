@@ -86,29 +86,6 @@ return [
 
 The module is **disabled in production** and only available in development environments.
 
-### Middleware Isolation
-
-ApiExplorer does **not** use the `web` middleware group. Instead, it registers only the core Laravel middleware it needs (cookies, sessions, CSRF). All global middleware registered in your application is **automatically excluded** — no configuration needed.
-
-For advanced use cases, two additional config keys are available (not included in the default config):
-
-- **`excluded_middleware`** — exclude additional non-global middleware (e.g. one assigned to a route group):
-
-```php
-'excluded_middleware' => [
-    \App\Http\Middleware\SomeGroupMiddleware::class,
-],
-```
-
-- **`middleware`** — fully replace the middleware stack:
-
-```php
-'middleware' => [
-    \Illuminate\Session\Middleware\StartSession::class,
-    // only what you need
-],
-```
-
 ## Publishing Assets
 
 To publish views for customization:
