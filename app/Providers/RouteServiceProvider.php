@@ -24,6 +24,7 @@ class RouteServiceProvider extends ServiceProvider
         }
 
         Route::middleware($this->resolveMiddleware())
+            ->withoutMiddleware(config('api-explorer.excluded_middleware', []))
             ->group(__DIR__.'/../../routes/web.php');
     }
 
