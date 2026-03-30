@@ -7,7 +7,7 @@
         <input
             x-model="searchQuery"
             @input="performSearch()"
-            @keydown.escape="searchQuery = ''"
+            @keydown.escape="searchQuery = ''; performSearch()"
             type="text"
             placeholder="Search endpoints..."
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 focus:outline-none"
@@ -19,12 +19,12 @@
 
     <div class="space-y-2 flex-1">
         <!-- Show grouped view (filtered when searching) -->
-        <template x-for="(group, groupName) in (searchQuery ? filteredGrouped : grouped)" :key="groupName">
+        <template x-for="(group, groupName) in (searchQuery.trim() ? filteredGrouped : grouped)" :key="groupName">
             @include('api-explorer::partials.sidebar-group')
         </template>
 
         <!-- Show empty state when search yields no results -->
-        <template x-if="searchQuery && Object.keys(filteredGrouped).length === 0">
+        <template x-if="searchQuery.trim() && Object.keys(filteredGrouped).length === 0">
             <div class="text-center py-6">
                 <p class="text-xs text-gray-500 dark:text-gray-400">No endpoints found matching your search.</p>
             </div>

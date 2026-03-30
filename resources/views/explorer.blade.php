@@ -728,14 +728,15 @@
                 },
 
                 performSearch() {
-                    if (!this.searchQuery) {
+                    const query = this.searchQuery.trim();
+                    if (!query) {
                         this.filteredGrouped = {};
                         this.filteredEndpoints = [];
                         this.openAccordions.clear();
                         return;
                     }
 
-                    const results = this.fuse.search(this.searchQuery);
+                    const results = this.fuse.search(query);
                     this.filteredEndpoints = results.map(result => result.item);
 
                     // Build filtered tree structure maintaining hierarchy
