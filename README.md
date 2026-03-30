@@ -4,19 +4,43 @@ A self-hosted API explorer for local development in Laravel applications. Automa
 
 ## Features
 
-- 🔍 Automatic API route discovery and documentation
-- 📊 Inspect action handlers and their data structures
-- 🎯 View request/response schemas from DTOs and transformers
-- 🌐 Manage multiple environment configurations
-- ⚡ Zero-configuration setup for Laravel 12+ applications
-- 🚀 Development-only module (production disabled)
+- Automatic API route discovery and documentation
+- Inspect action handlers and their data structures
+- View request/response schemas from DTOs and transformers
+- Manage multiple environment configurations
+- Per-endpoint state persistence with URL-based restoration
+- Fuzzy search across all endpoints
+- Fake data generation for request testing
+- Dark mode support
+- Zero-configuration setup for Laravel 12+ applications
+- Development-only module (production disabled)
+
+## Tech Stack
+
+### Backend
+
+- **PHP** 8.3+
+- **Laravel** 12+ (module architecture)
+- **spatie/laravel-data** ^3|^4 — DTO schemas and validation
+- **lorisleiva/laravel-actions** ^2.0 — Action-based route handlers
+
+### Frontend
+
+- **Alpine.js** 3.x — Reactive UI components
+- **Tailwind CSS** — Utility-first styling (CDN)
+- **Fuse.js** — Fuzzy search for endpoint filtering
+- **Faker.js** 8.3.1 — Fake data generation for request fields
+- **Font Awesome** 6.5.1 — Icons
+- **Blade** — Server-side templating
+
+All frontend assets are loaded via CDN — no build step required.
 
 ## Requirements
 
-- PHP 8.4+
+- PHP 8.3+
 - Laravel 12+
-- `spatie/laravel-data` ^4.20
-- `lorisleiva/laravel-actions` ^2.10
+- `spatie/laravel-data` ^3|^4
+- `lorisleiva/laravel-actions` ^2.0
 
 ## Installation
 
