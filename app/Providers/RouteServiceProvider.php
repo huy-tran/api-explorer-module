@@ -2,6 +2,7 @@
 
 namespace Modules\ApiExplorer\Providers;
 
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -24,7 +25,7 @@ class RouteServiceProvider extends ServiceProvider
         }
 
         Route::middleware($this->resolveMiddleware())
-            ->withoutMiddleware(config('api-explorer.excluded_middleware', []))
+            ->withoutMiddleware($this->resolveExcludedMiddleware())
             ->group(__DIR__.'/../../routes/web.php');
     }
 
@@ -39,5 +40,16 @@ class RouteServiceProvider extends ServiceProvider
             $this->defaultMiddleware,
             fn (string $class): bool => class_exists($class),
         ));
+    }
+
+    /** @return list<class-string> */
+    protected function resolveExcludedMiddleware(): array
+    {
+        $kernel = $this->app->make(Kernel::class);
+
+        return array_values(array_unique(array_merge(
+            $kernel->getGlobalMiddleware(),
+            config('api-explorer.excluded_middleware', []),
+        )));
     }
 }
