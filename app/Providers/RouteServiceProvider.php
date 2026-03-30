@@ -3,25 +3,17 @@
 namespace Modules\ApiExplorer\Providers;
 
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
-use Modules\Base\Traits\ModuleRoutes;
+use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    use ModuleRoutes {
-        map as traitMap;
-    }
-
     public function map(): void
     {
         if ($this->app->isProduction() || ! config('api-explorer.enabled', true)) {
             return;
         }
 
-        $this->traitMap();
-    }
-
-    protected function getRouteDirectory(): string
-    {
-        return __DIR__.'/../../routes';
+        Route::middleware('web')
+            ->group(__DIR__.'/../../routes/web.php');
     }
 }
