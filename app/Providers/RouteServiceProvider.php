@@ -45,11 +45,24 @@ class RouteServiceProvider extends ServiceProvider
     /** @return list<class-string> */
     protected function resolveExcludedMiddleware(): array
     {
-        $kernel = $this->app->make(Kernel::class);
-
         return array_values(array_unique(array_merge(
-            $kernel->getGlobalMiddleware(),
+            $this->getGlobalMiddleware(),
             config('api-explorer.excluded_middleware', []),
         )));
+    }
+
+    /** @return list<class-string> */
+    protected function getGlobalMiddleware(): array
+    {
+        $kernel = $this->app->make(Kernel::class);
+
+        if (method_exists($kernel, 'getGlobalMiddleware')) {
+            return $kernel->getGlobalMiddleware();
+        }
+
+        // Laravel 10: $middleware property is protected, use reflection
+        $reflection = new \ReflectionProperty($kernel, 'middleware');
+
+        return $reflection->getValue($kernel);
     }
 }
