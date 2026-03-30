@@ -65,11 +65,51 @@ This creates `config/api-explorer.php`:
 ```php
 return [
     'enabled' => env('API_EXPLORER_ENABLED', true),
-    // Additional configuration options
+    'cache' => env('API_EXPLORER_CACHE', true),
+    'cache_ttl' => env('API_EXPLORER_CACHE_TTL', 86400),
+    'route_prefix' => env('API_EXPLORER_ROUTE_PREFIX', 'dev/api-explorer'),
+    'middleware' => null,
+    'excluded_middleware' => [],
+    'exclude_patterns' => [
+        'boost',
+        'up',
+        'storage',
+    ],
 ];
 ```
 
+| Option | Default | Description |
+|---|---|---|
+| `enabled` | `true` | Enable or disable the module |
+| `cache` | `true` | Cache scanned API data |
+| `cache_ttl` | `86400` | Cache time-to-live in seconds |
+| `route_prefix` | `dev/api-explorer` | URL prefix for the explorer routes |
+| `middleware` | `null` | Override the entire middleware stack (see below) |
+| `excluded_middleware` | `[]` | Middleware to exclude from ApiExplorer routes (see below) |
+| `exclude_patterns` | `[...]` | Route patterns to exclude from scanning |
+
 The module is **disabled in production** and only available in development environments.
+
+### Middleware Isolation
+
+ApiExplorer does **not** use the `web` middleware group. Instead, it registers only the core Laravel middleware it needs (cookies, sessions, CSRF). This prevents your application's custom middleware from interfering with the explorer.
+
+If a **global middleware** in your application causes issues with ApiExplorer routes, exclude it:
+
+```php
+'excluded_middleware' => [
+    \App\Http\Middleware\YourGlobalMiddleware::class,
+],
+```
+
+To fully replace the middleware stack with your own:
+
+```php
+'middleware' => [
+    \Illuminate\Session\Middleware\StartSession::class,
+    // only what you need
+],
+```
 
 ## Publishing Assets
 
