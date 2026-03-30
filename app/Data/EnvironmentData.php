@@ -4,7 +4,7 @@ namespace Modules\ApiExplorer\Data;
 
 use Spatie\LaravelData\Data;
 
-readonly class EnvironmentData extends Data
+class EnvironmentData extends Data
 {
     public function __construct(
         public string $name,
