@@ -18,7 +18,7 @@
 
     <div class="space-y-2 flex-1">
         <!-- Show grouped view (filtered when searching) -->
-        <template x-for="(group, groupName) in (searchQuery.trim() ? filteredGrouped : grouped)" :key="groupName">
+        <template x-for="(group, groupName) in filteredGrouped" :key="groupName">
             @include('api-explorer::partials.sidebar-group')
         </template>
 

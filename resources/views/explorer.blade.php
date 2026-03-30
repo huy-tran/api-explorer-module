@@ -540,6 +540,8 @@
                     }
                     // Sort the grouped data
                     this.grouped = this.sortGroupedData(this.grouped);
+                    // Initialize filtered view with all endpoints
+                    this.filteredGrouped = this.grouped;
                     // Flatten nested structure for lookup
                     this.allEndpoints = this.flattenEndpoints(this.grouped);
 
@@ -733,8 +735,8 @@
                 performSearch() {
                     const query = this.searchQuery.trim();
                     if (!query) {
-                        this.filteredGrouped = {};
-                        this.filteredEndpoints = [];
+                        this.filteredGrouped = this.grouped;
+                        this.filteredEndpoints = this.allEndpoints;
                         this.openAccordions.clear();
                         return;
                     }
