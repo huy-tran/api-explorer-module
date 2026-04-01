@@ -134,6 +134,75 @@ The module uses several key components:
 - **EndpointPipeline** - Processes and enriches endpoint information
 - **FieldTypeMapper** - Maps PHP types to readable schema types
 
+## DTO Integration
+
+### Scalar and Enum Properties
+
+Standard PHP types are automatically mapped to form fields:
+
+| PHP Type | Input Type |
+|---|---|
+| `string` | Text |
+| `int`, `float` | Number |
+| `bool` | Checkbox |
+| `array` | Repeatable text items |
+| `mixed` | Textarea |
+| `Carbon`, `DateTime` | Datetime picker |
+| `UploadedFile` | File upload |
+| `BackedEnum` | Select dropdown |
+| Nested `Data` class | Expandable group |
+
+### Eloquent Model Properties
+
+Eloquent model parameters in DTOs are automatically rendered as body ID fields using a convention-based key derived from the class name:
+
+| Model class | Auto-derived key | Input type |
+|---|---|---|
+| `Client` | `clientId` | `number` |
+| `ClientProject` | `clientProjectId` | `number` |
+| `DocumentChunk` | `documentChunkId` | `number` |
+
+No annotation is required for the common case:
+
+```php
+class CreateDocumentData extends Data
+{
+    public function __construct(
+        #[Required]
+        public Project $project,   // → projectId (number), auto-derived
+
+        #[Required]
+        public string $title,
+    ) {}
+}
+```
+
+#### Overriding with `#[BodyField]`
+
+Use `#[BodyField]` when the default key or input type doesn't fit:
+
+```php
+use Modules\ApiExplorer\Attributes\BodyField;
+
+class CreateDocumentData extends Data
+{
+    public function __construct(
+        #[BodyField('externalRef', 'text')] // UUID key, text input
+        public SomeModel $ref,
+
+        #[BodyField('parentId')]            // custom key name
+        public Project $project,
+    ) {}
+}
+```
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `$key` | `string` | — | The field name sent in the request body |
+| `$inputType` | `string` | `'number'` | Input type rendered in the UI. Use `'text'` for UUID-keyed models |
+
 ## Environment Management
 
 Store and switch between multiple API environments:

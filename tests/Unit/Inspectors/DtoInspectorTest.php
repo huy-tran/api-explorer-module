@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\ApiExplorer\Attributes\ModelId;
+use Modules\ApiExplorer\Attributes\BodyField;
 use Modules\ApiExplorer\Inspectors\DtoInspector;
 use Modules\ApiExplorer\Inspectors\FieldTypeMapper;
 use Spatie\LaravelData\Attributes\Validation\Required;
@@ -28,28 +28,28 @@ class DtoWithPlainModel extends Data
     ) {}
 }
 
-class DtoWithModelId extends Data
+class DtoWithBodyField extends Data
 {
     public function __construct(
         #[Required]
-        #[ModelId('fakeModelId')]
+        #[BodyField('fakeModelId')]
         public FakeModel $model,
         public string $name,
     ) {}
 }
 
-class DtoWithTextModelId extends Data
+class DtoWithTextBodyField extends Data
 {
     public function __construct(
-        #[ModelId('uuid', 'text')]
+        #[BodyField('uuid', 'text')]
         public FakeModel $model,
     ) {}
 }
 
-class DtoWithOptionalModelId extends Data
+class DtoWithOptionalBodyField extends Data
 {
     public function __construct(
-        #[ModelId('fakeModelId')]
+        #[BodyField('fakeModelId')]
         public FakeModel|Optional $model,
         public string $name,
     ) {}
@@ -60,19 +60,19 @@ class ActionWithPlainModel
     public function handle(DtoWithPlainModel $dto): void {}
 }
 
-class ActionWithModelId
+class ActionWithBodyField
 {
-    public function handle(DtoWithModelId $dto): void {}
+    public function handle(DtoWithBodyField $dto): void {}
 }
 
-class ActionWithTextModelId
+class ActionWithTextBodyField
 {
-    public function handle(DtoWithTextModelId $dto): void {}
+    public function handle(DtoWithTextBodyField $dto): void {}
 }
 
-class ActionWithOptionalModelId
+class ActionWithOptionalBodyField
 {
-    public function handle(DtoWithOptionalModelId $dto): void {}
+    public function handle(DtoWithOptionalBodyField $dto): void {}
 }
 
 // ---------------------------------------------------------------------------
@@ -83,16 +83,8 @@ beforeEach(function () {
     $this->inspector = new DtoInspector(new FieldTypeMapper);
 });
 
-it('skips an eloquent model parameter without ModelId attribute', function () {
+it('auto-derives the body field key from the model class name', function () {
     $fields = $this->inspector->inspect(ActionWithPlainModel::class);
-
-    $names = array_column($fields, 'name');
-    expect($names)->not->toContain('model')
-        ->and($names)->toContain('name');
-});
-
-it('includes the model parameter as a number field when annotated with ModelId', function () {
-    $fields = $this->inspector->inspect(ActionWithModelId::class);
 
     $field = collect($fields)->firstWhere('name', 'fakeModelId');
     expect($field)->not->toBeNull()
@@ -102,15 +94,23 @@ it('includes the model parameter as a number field when annotated with ModelId',
         ->and($field['isFileField'])->toBeFalse();
 });
 
+it('overrides the auto-derived key when BodyField attribute is present', function () {
+    $fields = $this->inspector->inspect(ActionWithBodyField::class);
+
+    $field = collect($fields)->firstWhere('name', 'fakeModelId');
+    expect($field)->not->toBeNull()
+        ->and($field['inputType'])->toBe('number');
+});
+
 it('marks the model field as required when annotated with Required', function () {
-    $fields = $this->inspector->inspect(ActionWithModelId::class);
+    $fields = $this->inspector->inspect(ActionWithBodyField::class);
 
     $field = collect($fields)->firstWhere('name', 'fakeModelId');
     expect($field['required'])->toBeTrue();
 });
 
-it('uses a custom inputType from the ModelId attribute', function () {
-    $fields = $this->inspector->inspect(ActionWithTextModelId::class);
+it('uses a custom inputType from the BodyField attribute', function () {
+    $fields = $this->inspector->inspect(ActionWithTextBodyField::class);
 
     $field = collect($fields)->firstWhere('name', 'uuid');
     expect($field)->not->toBeNull()
@@ -118,7 +118,7 @@ it('uses a custom inputType from the ModelId attribute', function () {
 });
 
 it('marks the model field as not required when Optional', function () {
-    $fields = $this->inspector->inspect(ActionWithOptionalModelId::class);
+    $fields = $this->inspector->inspect(ActionWithOptionalBodyField::class);
 
     $field = collect($fields)->firstWhere('name', 'fakeModelId');
     expect($field)->not->toBeNull()

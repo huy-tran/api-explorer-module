@@ -5,7 +5,7 @@ namespace Modules\ApiExplorer\Attributes;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
-class ModelId
+class BodyField
 {
     public function __construct(
         public readonly string $key,

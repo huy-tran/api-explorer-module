@@ -3,7 +3,7 @@
 namespace Modules\ApiExplorer\Inspectors;
 
 use Illuminate\Database\Eloquent\Model;
-use Modules\ApiExplorer\Attributes\ModelId;
+use Modules\ApiExplorer\Attributes\BodyField;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -97,16 +97,17 @@ class DtoInspector
             return null;
         }
 
-        // Skip Eloquent model parameters unless annotated with #[ModelId]
+        // Eloquent model parameters are rendered as body ID fields.
+        // Convention: ClientProject → clientProjectId (number).
+        // Override with #[BodyField('customKey')] or #[BodyField('uuid', 'text')] when needed.
         if ($this->isEloquentModel($phpType)) {
-            $modelId = $this->extractModelIdAttribute($param);
-            if (! $modelId) {
-                return null;
-            }
+            $bodyField = $this->extractBodyFieldAttribute($param);
+            $key = $bodyField?->key ?? lcfirst(class_basename($phpType)).'Id';
+            $inputType = $bodyField?->inputType ?? 'number';
 
             return [
-                'name' => $modelId->key,
-                'inputType' => $modelId->inputType,
+                'name' => $key,
+                'inputType' => $inputType,
                 'required' => $this->isRequired($param, false, $isOptional),
                 'nullable' => $nullable,
                 'isOptional' => $isOptional,
@@ -260,9 +261,9 @@ class DtoInspector
         return null;
     }
 
-    private function extractModelIdAttribute(ReflectionParameter $param): ?ModelId
+    private function extractBodyFieldAttribute(ReflectionParameter $param): ?BodyField
     {
-        foreach ($param->getAttributes(ModelId::class) as $attr) {
+        foreach ($param->getAttributes(BodyField::class) as $attr) {
             return $attr->newInstance();
         }
 

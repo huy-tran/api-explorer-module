@@ -19,7 +19,8 @@
       "Bash(php -r \":*)",
       "Bash(php -l modules/ApiExplorer/app/Scanners/ModuleGrouper.php)",
       "Bash(./vendor/bin/pint --dirty --format agent)",
-      "Bash(php vendor/bin/pint --dirty --format agent)"
+      "Bash(php vendor/bin/pint --dirty --format agent)",
+      "Bash(rm:*)"
     ]
   },
   "enabledMcpjsonServers": [
