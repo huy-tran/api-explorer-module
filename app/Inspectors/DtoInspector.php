@@ -3,6 +3,7 @@
 namespace Modules\ApiExplorer\Inspectors;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\ApiExplorer\Attributes\ModelId;
 use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -96,9 +97,29 @@ class DtoInspector
             return null;
         }
 
-        // Skip Eloquent model parameters (route model binding, not form fields)
+        // Skip Eloquent model parameters unless annotated with #[ModelId]
         if ($this->isEloquentModel($phpType)) {
-            return null;
+            $modelId = $this->extractModelIdAttribute($param);
+            if (! $modelId) {
+                return null;
+            }
+
+            return [
+                'name' => $modelId->key,
+                'inputType' => $modelId->inputType,
+                'required' => $this->isRequired($param, false, $isOptional),
+                'nullable' => $nullable,
+                'isOptional' => $isOptional,
+                'defaultValue' => null,
+                'enumCases' => null,
+                'isArray' => false,
+                'isNested' => false,
+                'nestedDtoClass' => null,
+                'nestedFields' => [],
+                'validationHint' => null,
+                'isInAttribute' => false,
+                'isFileField' => false,
+            ];
         }
 
         $mapped = $this->mapper->map($phpType, $nullable);
@@ -234,6 +255,15 @@ class DtoInspector
                     return array_map('strval', $args[0]);
                 }
             }
+        }
+
+        return null;
+    }
+
+    private function extractModelIdAttribute(ReflectionParameter $param): ?ModelId
+    {
+        foreach ($param->getAttributes(ModelId::class) as $attr) {
+            return $attr->newInstance();
         }
 
         return null;

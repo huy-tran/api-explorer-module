@@ -17,7 +17,9 @@
       "Bash(php artisan:*)",
       "Bash(php -r \"echo method_exists\\(Illuminate\\\\Console\\\\Command::class, ''handle''\\) ? ''yes'' : ''no'';\")",
       "Bash(php -r \":*)",
-      "Bash(php -l modules/ApiExplorer/app/Scanners/ModuleGrouper.php)"
+      "Bash(php -l modules/ApiExplorer/app/Scanners/ModuleGrouper.php)",
+      "Bash(./vendor/bin/pint --dirty --format agent)",
+      "Bash(php vendor/bin/pint --dirty --format agent)"
     ]
   },
   "enabledMcpjsonServers": [
