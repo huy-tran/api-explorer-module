@@ -187,13 +187,37 @@
                     </div>
 
                     <!-- Sent Headers -->
-                    <div>
+                    <div
+                        x-data="{
+                            revealed: {},
+                            isSensitive(key) {
+                                return ['authorization', 'x-csrf-token'].includes(key.toLowerCase());
+                            },
+                            mask(value) {
+                                return value.length <= 8 ? '••••••••' : value.slice(0, 8) + '••••••••';
+                            },
+                            display(key, value) {
+                                return this.isSensitive(key) && !this.revealed[key] ? this.mask(value) : value;
+                            }
+                        }"
+                    >
                         <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Headers</h3>
                         <div class="space-y-1 text-sm font-mono">
                             <template x-for="[key, value] in Object.entries(response?.sentRequest?.headers || {})" :key="key">
-                                <div class="border-b border-gray-200 dark:border-gray-700 py-2 last:border-b-0">
-                                    <span class="font-medium text-gray-700 dark:text-gray-300" x-text="key + ':'"></span>
-                                    <span class="text-gray-600 dark:text-gray-400 ml-2 break-all" x-text="value"></span>
+                                <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 py-2 last:border-b-0">
+                                    <div class="min-w-0">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300" x-text="key + ':'"></span>
+                                        <span class="text-gray-600 dark:text-gray-400 ml-2 break-all" x-text="display(key, value)"></span>
+                                    </div>
+                                    <button
+                                        x-show="isSensitive(key)"
+                                        @click="revealed[key] = !revealed[key]"
+                                        type="button"
+                                        class="ml-3 shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        :title="revealed[key] ? 'Hide' : 'Reveal'"
+                                    >
+                                        <i class="fas fa-xs" :class="revealed[key] ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                    </button>
                                 </div>
                             </template>
                         </div>
