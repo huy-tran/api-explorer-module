@@ -447,6 +447,7 @@
                 editingEnvName: '',
                 editingEnvBaseUrl: '',
                 editingEnvVars: [],
+                importResult: null,
 
                 // Faker browser
                 showFakerBrowser: false,
@@ -1913,6 +1914,49 @@
 
                 removeEnvVar(index) {
                     this.editingEnvVars.splice(index, 1);
+                },
+
+                exportEnv(name) {
+                    window.location.href = `{{ route("api-explorer.environments.index") }}/${encodeURIComponent(name)}/export`;
+                },
+
+                exportAllEnvs() {
+                    window.location.href = '{{ route("api-explorer.environments.export-all") }}';
+                },
+
+                async importEnv(event) {
+                    const file = event.target.files[0];
+                    if (!file) {
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('_token', document.querySelector('meta[name=csrf-token]')?.content ?? '');
+
+                    try {
+                        const res = await fetch('{{ route("api-explorer.environments.import") }}', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            await this.loadEnvironments();
+                            const count = data.imported?.length ?? 0;
+                            this.importResult = count === 1
+                                ? `1 environment imported.`
+                                : `${count} environments imported.`;
+                            setTimeout(() => { this.importResult = null; }, 4000);
+                        } else {
+                            console.error('Import failed:', data);
+                        }
+                    } catch (error) {
+                        console.error('Import error:', error);
+                    }
+
+                    event.target.value = '';
                 },
 
                 insertFakerExpr(methodOrExpr) {

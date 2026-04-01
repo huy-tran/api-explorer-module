@@ -59,6 +59,14 @@
                                         <i class="fas fa-copy"></i>
                                     </button>
                                     <button
+                                        @click.stop="exportEnv(env)"
+                                        type="button"
+                                        title="Export environment"
+                                        class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium tracking-wide text-blue-500 transition-colors duration-100 rounded focus:outline-none bg-blue-50 hover:text-blue-600 hover:bg-blue-100"
+                                    >
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button
                                         @click.stop="deleteEnv(env); await loadEnvironments()"
                                         type="button"
                                         title="Delete environment"
@@ -71,8 +79,8 @@
                         </template>
                         <p x-show="environments.length === 0" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No environments yet.</p>
                     </div>
-                    <!-- Add Environment Button -->
-                    <div class="p-3 border-t border-gray-200 dark:border-gray-700">
+                    <!-- Environment Actions -->
+                    <div class="p-3 border-t border-gray-200 dark:border-gray-700 space-y-2">
                         <button
                             @click="openNewEnv()"
                             type="button"
@@ -80,6 +88,27 @@
                         >
                             + Add Environment
                         </button>
+                        <div class="flex gap-2">
+                            <button
+                                @click="$refs.importFile.click()"
+                                type="button"
+                                title="Import .md or .zip"
+                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium tracking-wide text-neutral-500 transition-colors duration-100 rounded-md focus:outline-none bg-neutral-50 hover:text-neutral-600 hover:bg-neutral-100"
+                            >
+                                <i class="fas fa-upload"></i> Import
+                            </button>
+                            <button
+                                @click="exportAllEnvs()"
+                                type="button"
+                                :disabled="environments.length === 0"
+                                title="Export all as ZIP"
+                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium tracking-wide text-neutral-500 transition-colors duration-100 rounded-md focus:outline-none bg-neutral-50 hover:text-neutral-600 hover:bg-neutral-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <i class="fas fa-download"></i> Export All
+                            </button>
+                        </div>
+                        <input x-ref="importFile" type="file" accept=".md,.zip" class="hidden" @change="importEnv($event)" />
+                        <p x-show="importResult" x-text="importResult" class="text-xs text-center text-green-600 dark:text-green-400"></p>
                     </div>
                 </div>
             </div>
