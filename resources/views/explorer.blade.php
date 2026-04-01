@@ -542,6 +542,19 @@
                         this.auth = { type: 'none', bearer: '', basicUsername: '', basicPassword: '' };
                         this.authApplied = { ...this.auth };
                     }
+                    // Migrate: remove any Authorization header that was auto-added by the old applyAuth() behavior
+                    const expectedAuthValue = this.auth.type === 'bearer' && this.auth.bearer
+                        ? `Bearer ${this.auth.bearer}`
+                        : this.auth.type === 'basic' && this.auth.basicUsername
+                            ? `Basic ${btoa(`${this.auth.basicUsername}:${this.auth.basicPassword}`)}`
+                            : null;
+                    if (expectedAuthValue) {
+                        this.headers = this.headers.filter(
+                            h => !(h.key === 'Authorization' && h.value === expectedAuthValue)
+                        );
+                        this.persistHeaders();
+                    }
+
                     try {
                         this.endpointState = JSON.parse(localStorage.getItem('apiExplorer.endpointState') || '{}');
                     } catch {
@@ -1253,6 +1266,20 @@
                         }
                     });
 
+                    // Inject Authorization from auth state unless user has manually set one
+                    const hasManualAuth = this.headers.some(
+                        h => h.enabled !== false && h.key?.toLowerCase() === 'authorization' && h.value
+                    );
+                    if (!hasManualAuth) {
+                        if (this.auth.type === 'bearer' && this.auth.bearer) {
+                            options.headers['Authorization'] = `Bearer ${this.applyVars(this.auth.bearer)}`;
+                        } else if (this.auth.type === 'basic' && this.auth.basicUsername) {
+                            const username = this.applyVars(this.auth.basicUsername);
+                            const password = this.applyVars(this.auth.basicPassword);
+                            options.headers['Authorization'] = `Basic ${btoa(`${username}:${password}`)}`;
+                        }
+                    }
+
                     // Handle body for POST/PUT/PATCH
                     const filteredBody = this.getFilteredBody();
                     if (['POST', 'PUT', 'PATCH'].includes(method)) {
@@ -1345,14 +1372,10 @@
                 },
 
                 useAsToken(token) {
-                    const existingIndex = this.headers.findIndex(h => h.key === 'Authorization');
-                    if (existingIndex >= 0) {
-                        this.headers[existingIndex].value = `Bearer ${token}`;
-                        this.headers[existingIndex].enabled = true;
-                    } else {
-                        this.headers.push({ key: 'Authorization', value: `Bearer ${token}`, enabled: true });
-                    }
-                    this.persistHeaders();
+                    this.auth.type = 'bearer';
+                    this.auth.bearer = token;
+                    this.authApplied = { ...this.auth };
+                    this.persistAuth();
                 },
 
                 persistHeaders() {
@@ -1360,32 +1383,9 @@
                 },
 
                 applyAuth() {
-                    const existingIndex = this.headers.findIndex(h => h.key === 'Authorization');
-
-                    if (this.auth.type === 'bearer') {
-                        const value = `Bearer ${this.auth.bearer}`;
-                        if (existingIndex >= 0) {
-                            this.headers[existingIndex].value = value;
-                            this.headers[existingIndex].enabled = true;
-                        } else {
-                            this.headers.push({ key: 'Authorization', value, enabled: true });
-                        }
-                    } else if (this.auth.type === 'basic') {
-                        const value = `Basic ${btoa(`${this.auth.basicUsername}:${this.auth.basicPassword}`)}`;
-                        if (existingIndex >= 0) {
-                            this.headers[existingIndex].value = value;
-                            this.headers[existingIndex].enabled = true;
-                        } else {
-                            this.headers.push({ key: 'Authorization', value, enabled: true });
-                        }
-                    } else if (this.auth.type === 'none' && existingIndex >= 0) {
-                        this.headers.splice(existingIndex, 1);
-                    }
-
                     this.authApplied = { ...this.auth };
                     this.authJustSaved = true;
                     setTimeout(() => { this.authJustSaved = false; }, 2000);
-                    this.persistHeaders();
                     this.persistAuth();
                 },
 
