@@ -105,6 +105,15 @@
                     >
                         Headers
                     </button>
+                    <button
+                        data-tab="request"
+                        @click="responseTab = 'request'; repositionResponseTabMarker()"
+                        :class="responseTab === 'request' ? 'text-gray-900 dark:text-gray-100 font-semibold' : 'text-gray-600 dark:text-gray-400'"
+                        type="button"
+                        class="relative z-20 inline-flex items-center justify-center h-9 px-3 text-sm font-medium transition-all rounded-md cursor-pointer whitespace-nowrap"
+                    >
+                        Request
+                    </button>
                     <div x-ref="responseTabMarker" class="absolute left-0.5 z-10 h-9 duration-300 ease-out" x-cloak>
                         <div class="w-full h-full bg-white dark:bg-gray-700 rounded-md shadow-sm dark:shadow-black/20"></div>
                     </div>
@@ -165,6 +174,38 @@
                         <div class="border-b border-gray-200 dark:border-gray-700 py-2 last:border-b-0">
                             <span class="font-medium text-gray-700 dark:text-gray-300" x-text="key + ':'" ></span>
                             <span class="text-gray-600 dark:text-gray-400 ml-2" x-text="value"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Request Tab -->
+                <div x-show="responseTab === 'request'" class="space-y-4">
+                    <!-- Request Line -->
+                    <div class="flex items-center gap-3 rounded bg-gray-50 dark:bg-gray-950 px-3 py-2">
+                        <span class="shrink-0 rounded px-2 py-0.5 text-xs font-bold" :class="methodColor(response?.sentRequest?.method)" x-text="response?.sentRequest?.method"></span>
+                        <span class="font-mono text-sm text-gray-800 dark:text-gray-200 break-all" x-text="response?.sentRequest?.url"></span>
+                    </div>
+
+                    <!-- Sent Headers -->
+                    <div>
+                        <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Headers</h3>
+                        <div class="space-y-1 text-sm font-mono">
+                            <template x-for="[key, value] in Object.entries(response?.sentRequest?.headers || {})" :key="key">
+                                <div class="border-b border-gray-200 dark:border-gray-700 py-2 last:border-b-0">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300" x-text="key + ':'"></span>
+                                    <span class="text-gray-600 dark:text-gray-400 ml-2 break-all" x-text="value"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Sent Body -->
+                    <template x-if="response?.sentRequest?.body !== null && response?.sentRequest?.body !== undefined">
+                        <div>
+                            <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Body</h3>
+                            <div class="json-viewer">
+                                <pre class="overflow-x-auto rounded bg-gray-50 dark:bg-gray-950 p-3 text-sm font-mono text-gray-800 dark:text-gray-200"><span x-html="highlightJson(response?.sentRequest?.body)"></span></pre>
+                            </div>
                         </div>
                     </template>
                 </div>

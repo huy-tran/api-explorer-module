@@ -1148,12 +1148,33 @@
                     this.loading = true;
                     this.response = null;
 
+                    let sentRequest = null;
+
                     try {
                         const startTime = performance.now();
                         const options = this.buildRequestOptions();
 
                         const uri = this.resolveUri() + (options.url || '');
                         const resolvedBaseUrl = this.applyVars(this.baseUrl);
+
+                        sentRequest = {
+                            method: options.method,
+                            url: resolvedBaseUrl + uri,
+                            headers: { ...options.headers },
+                            body: (() => {
+                                if (!options.body) return null;
+                                if (typeof options.body === 'string') {
+                                    try { return JSON.parse(options.body); } catch { return options.body; }
+                                }
+                                if (options.body instanceof FormData) {
+                                    const obj = {};
+                                    options.body.forEach((v, k) => { obj[k] = v instanceof File ? `[File: ${v.name}]` : v; });
+                                    return obj;
+                                }
+                                return null;
+                            })(),
+                        };
+
                         const response = await fetch(resolvedBaseUrl + uri, options);
                         const endTime = performance.now();
                         const data = await response.text();
@@ -1177,6 +1198,7 @@
                             headers,
                             body: parsedBody,
                             rawBody: data,
+                            sentRequest,
                         };
 
                         // Expand all tree nodes by default
@@ -1214,6 +1236,7 @@
                         this.response = {
                             error: error.message,
                             status: 0,
+                            sentRequest,
                         };
                     } finally {
                         this.loading = false;
