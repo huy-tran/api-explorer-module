@@ -49,6 +49,15 @@
                 >
                     Query
                 </button>
+                <button
+                    data-tab="auth"
+                    @click="activeTab = 'auth'; repositionTabMarker()"
+                    :class="activeTab === 'auth' ? 'text-gray-900 dark:text-gray-100 font-semibold' : 'text-gray-600 dark:text-gray-400'"
+                    type="button"
+                    class="relative z-20 inline-flex items-center justify-center h-9 px-3 text-sm font-medium transition-all rounded-md cursor-pointer whitespace-nowrap"
+                >
+                    Auth
+                </button>
                 <div x-ref="tabMarker" class="absolute left-0.5 z-10 h-9 duration-300 ease-out" x-cloak>
                     <div class="w-full h-full bg-white dark:bg-gray-700 rounded-md shadow-sm dark:shadow-black/20"></div>
                 </div>
@@ -514,6 +523,85 @@
                 >
                     + Add Query Param
                 </button>
+            </div>
+
+            <!-- Auth Tab -->
+            <div id="tab-auth" role="tabpanel" x-show="activeTab === 'auth'" class="p-6 space-y-4">
+                <!-- Auth Type Selector -->
+                <div class="flex gap-2">
+                    <button
+                        @click="auth.type = 'none'"
+                        type="button"
+                        :class="auth.type === 'none' ? 'bg-neutral-200 dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-semibold' : 'bg-neutral-50 dark:bg-gray-800 text-neutral-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-gray-700'"
+                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-100 rounded-md focus:outline-none"
+                    >
+                        None
+                    </button>
+                    <button
+                        @click="auth.type = 'bearer'"
+                        type="button"
+                        :class="auth.type === 'bearer' ? 'bg-neutral-200 dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-semibold' : 'bg-neutral-50 dark:bg-gray-800 text-neutral-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-gray-700'"
+                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-100 rounded-md focus:outline-none"
+                    >
+                        Bearer
+                    </button>
+                    <button
+                        @click="auth.type = 'basic'"
+                        type="button"
+                        :class="auth.type === 'basic' ? 'bg-neutral-200 dark:bg-gray-600 text-gray-900 dark:text-gray-100 font-semibold' : 'bg-neutral-50 dark:bg-gray-800 text-neutral-500 dark:text-gray-400 hover:bg-neutral-100 dark:hover:bg-gray-700'"
+                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-100 rounded-md focus:outline-none"
+                    >
+                        Basic Auth
+                    </button>
+                </div>
+
+                <!-- Bearer Token -->
+                <div x-show="auth.type === 'bearer'" class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Token</label>
+                    <input
+                        x-model="auth.bearer"
+                        type="text"
+                        placeholder="Enter token (without Bearer prefix)"
+                        class="w-full h-10 px-3 py-2 text-sm bg-white dark:bg-gray-800 border rounded-md border-neutral-300 dark:border-gray-600 placeholder:text-neutral-500 dark:placeholder:text-gray-500 dark:text-gray-200 focus:border-neutral-300 focus:outline-none"
+                    />
+                </div>
+
+                <!-- Basic Auth -->
+                <div x-show="auth.type === 'basic'" class="space-y-3">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                        <input
+                            x-model="auth.basicUsername"
+                            type="text"
+                            placeholder="Username"
+                            class="w-full h-10 px-3 py-2 text-sm bg-white dark:bg-gray-800 border rounded-md border-neutral-300 dark:border-gray-600 placeholder:text-neutral-500 dark:placeholder:text-gray-500 dark:text-gray-200 focus:border-neutral-300 focus:outline-none"
+                        />
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                        <input
+                            x-model="auth.basicPassword"
+                            type="password"
+                            placeholder="Password"
+                            class="w-full h-10 px-3 py-2 text-sm bg-white dark:bg-gray-800 border rounded-md border-neutral-300 dark:border-gray-600 placeholder:text-neutral-500 dark:placeholder:text-gray-500 dark:text-gray-200 focus:border-neutral-300 focus:outline-none"
+                        />
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="flex items-center gap-3">
+                    <button
+                        @click="applyAuth()"
+                        x-show="authHasChanges() || authJustSaved"
+                        type="button"
+                        :class="authJustSaved ? 'text-green-600 bg-green-50 hover:text-green-700 hover:bg-green-100' : 'text-blue-500 bg-blue-50 hover:text-blue-600 hover:bg-blue-100'"
+                        class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide transition-colors duration-100 rounded-md focus:outline-none"
+                        x-cloak
+                    >
+                        <span x-show="!authJustSaved">Save</span>
+                        <span x-show="authJustSaved">Saved!</span>
+                    </button>
+                </div>
             </div>
 
         </div>

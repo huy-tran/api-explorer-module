@@ -423,6 +423,9 @@
                 pathParams: {},
                 endpointState: {},
                 activeTab: 'body',
+                auth: { type: 'none', bearer: '', basicUsername: '', basicPassword: '' },
+                authApplied: { type: 'none', bearer: '', basicUsername: '', basicPassword: '' },
+                authJustSaved: false,
                 responseTab: 'json',
                 expandedTreeNodes: {},
                 response: null,
@@ -525,6 +528,19 @@
                     };
                     ensureHeader('Content-Type');
                     ensureHeader('Accept');
+                    try {
+                        const savedAuth = JSON.parse(localStorage.getItem('apiExplorer.auth') || '{}');
+                        this.auth = {
+                            type: savedAuth.type || 'none',
+                            bearer: savedAuth.bearer || '',
+                            basicUsername: savedAuth.basicUsername || '',
+                            basicPassword: savedAuth.basicPassword || '',
+                        };
+                        this.authApplied = { ...this.auth };
+                    } catch {
+                        this.auth = { type: 'none', bearer: '', basicUsername: '', basicPassword: '' };
+                        this.authApplied = { ...this.auth };
+                    }
                     try {
                         this.endpointState = JSON.parse(localStorage.getItem('apiExplorer.endpointState') || '{}');
                     } catch {
@@ -1340,6 +1356,44 @@
 
                 persistHeaders() {
                     localStorage.setItem('apiExplorer.headers', JSON.stringify(this.headers));
+                },
+
+                applyAuth() {
+                    const existingIndex = this.headers.findIndex(h => h.key === 'Authorization');
+
+                    if (this.auth.type === 'bearer') {
+                        const value = `Bearer ${this.auth.bearer}`;
+                        if (existingIndex >= 0) {
+                            this.headers[existingIndex].value = value;
+                            this.headers[existingIndex].enabled = true;
+                        } else {
+                            this.headers.push({ key: 'Authorization', value, enabled: true });
+                        }
+                    } else if (this.auth.type === 'basic') {
+                        const value = `Basic ${btoa(`${this.auth.basicUsername}:${this.auth.basicPassword}`)}`;
+                        if (existingIndex >= 0) {
+                            this.headers[existingIndex].value = value;
+                            this.headers[existingIndex].enabled = true;
+                        } else {
+                            this.headers.push({ key: 'Authorization', value, enabled: true });
+                        }
+                    } else if (this.auth.type === 'none' && existingIndex >= 0) {
+                        this.headers.splice(existingIndex, 1);
+                    }
+
+                    this.authApplied = { ...this.auth };
+                    this.authJustSaved = true;
+                    setTimeout(() => { this.authJustSaved = false; }, 2000);
+                    this.persistHeaders();
+                    this.persistAuth();
+                },
+
+                authHasChanges() {
+                    return JSON.stringify(this.auth) !== JSON.stringify(this.authApplied);
+                },
+
+                persistAuth() {
+                    localStorage.setItem('apiExplorer.auth', JSON.stringify(this.auth));
                 },
 
                 toggleDark() {
